@@ -1,0 +1,111 @@
+<!-- 织念 - 新建记录页 -->
+<view class="container">
+  <!-- 分区选择 -->
+  <view class="category-selector">
+    <view
+      class="cat-option {{selectedCategory === item.key ? 'cat-active' : ''}}"
+      style="--cat-color: {{item.color}}; --cat-bg: {{item.bgColor}}"
+      wx:for="{{categories}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="selectCategory"
+    >
+      <text class="cat-opt-icon">{{item.icon}}</text>
+      <text class="cat-opt-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 内容输入 -->
+  <view class="input-section">
+    <textarea
+      class="textarea-box main-input"
+      placeholder="{{placeholderText}}"
+      placeholder-class="placeholder"
+      maxlength="2000"
+      auto-height
+      focus="{{autoFocus}}"
+      value="{{content}}"
+      bindinput="onInput"
+      bindfocus="onFocus"
+      bindblur="onBlur"
+    />
+    <view class="char-count">
+      <text class="{{contentLength > 1800 ? 'warn' : ''}}">{{contentLength}}</text>
+      <text> / 2000</text>
+    </view>
+  </view>
+
+  <!-- 关键词预览 -->
+  <view class="keywords-preview" wx:if="{{previewKeywords.length > 0}}">
+    <text class="kw-label">🔑 提取的关键词</text>
+    <view class="kw-list">
+      <text
+        class="kw-tag"
+        wx:for="{{previewKeywords}}"
+        wx:key="*this"
+      >{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 快捷标签 -->
+  <view class="quick-tags" wx:if="{{quickTags.length > 0}}">
+    <text class="kw-label">🏷️ 快捷标签</text>
+    <view class="tag-scroll">
+      <text
+        class="quick-tag {{selectedTags.indexOf(item) !== -1 ? 'tag-selected' : ''}}"
+        wx:for="{{quickTags}}"
+        wx:key="*this"
+        data-tag="{{item}}"
+        bindtap="toggleTag"
+      >{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 已选标签展示 -->
+  <view class="selected-tags" wx:if="{{selectedTags.length > 0}}">
+    <text
+      class="sel-tag"
+      wx:for="{{selectedTags}}"
+      wx:key="*this"
+      data-tag="{{item}}"
+      bindtap="removeTag"
+    >{{item}} ✕</text>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-bar">
+    <button class="btn-ghost btn-cancel" bindtap="goBack">取消</button>
+    <button class="btn-primary btn-save {{content.trim() ? '' : 'disabled'}}" bindtap="saveCard" disabled="{{!content.trim()}}">
+      💾 存入{{currentCategoryName}}
+    </button>
+  </view>
+
+  <!-- 关联提示（保存后显示） -->
+  <view class="link-hint-box" wx:if="{{showLinkHint && linkedRecommendations.length > 0}}">
+    <view class="link-hint-header">
+      <text class="link-hint-title">🔗 发现可能关联的记录</text>
+      <text class="link-skip" bindtap="skipLinks">跳过</text>
+    </view>
+    <view class="link-rec-list">
+      <view
+        class="link-rec-item"
+        wx:for="{{linkedRecommendations}}"
+        wx:key="targetId"
+        data-id="{{item.targetId}}"
+        bindtap="createQuickLink"
+      >
+        <view class="rec-score">
+          <text class="score-num">{{item.score}}</text>
+          <text class="score-label">分</text>
+        </view>
+        <view class="rec-info">
+          <text class="rec-content">{{item.targetContent}}...</text>
+          <view class="rec-kws">
+            <text class="rec-kw" wx:for="{{item.commonKeywords}}" wx:key="*this" wx:for-item="kw">#{{kw}}</text>
+          </view>
+        </view>
+        <text class="rec-action">关联</text>
+      </view>
+    </view>
+  </view>
+</view>

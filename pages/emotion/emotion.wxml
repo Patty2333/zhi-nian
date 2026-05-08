@@ -1,0 +1,44 @@
+<!-- 织念 - 情绪流淌 -->
+<view class="container">
+  <view class="zone-header">
+    <view class="zone-icon-wrap emotion-glow"><text class="zone-icon">🌊</text></view>
+    <view class="zone-title-area">
+      <text class="zone-title">情绪流淌</text>
+      <text class="zone-desc">心情记录 · 自我对话 · 情绪觉察</text>
+    </view>
+    <view class="zone-count">{{cards.length}} 条</view>
+  </view>
+
+  <view class="card-list" wx:if="{{cards.length > 0}}">
+    <view
+      class="thought-card card card-glow-emotion fade-in-up"
+      style="animation-delay: {{index * 0.05}}s"
+      wx:for="{{cards}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goToDetail"
+    >
+      <view class="card-top">
+        <text class="card-time">{{item.timeAgo}}</text>
+        <view class="card-link-badge" wx:if="{{item.linkCount > 0}}"><text>🔗 {{item.linkCount}}</text></view>
+      </view>
+      <text class="card-content">{{item.content}}</text>
+      <view class="card-bottom" wx:if="{{item.tags.length > 0 || item.keywords.length > 0}}">
+        <view class="card-tags" wx:if="{{item.tags.length > 0}}">
+          <text class="tag tag-emotion" wx:for="{{item.tags}}" wx:key="*this" wx:for-item="tag">#{{tag}}</text>
+        </view>
+        <view class="card-keywords" wx:if="{{item.keywords.length > 0 && !item.tags.length}}">
+          <text class="kw-item" wx:for="{{item.keywords.slice(0, 3)}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{cards.length === 0}}">
+    <text class="empty-icon">🌊</text>
+    <text class="empty-text">还没有情绪记录</text>
+    <text class="empty-hint">点击下方 + 记录此刻心情</text>
+  </view>
+
+  <view class="fab fab-emotion" bindtap="goToNew"><text class="fab-icon">+</text></view>
+</view>

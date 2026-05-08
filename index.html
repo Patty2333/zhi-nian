@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>织念 ZhiNian — 编织零散的念头</title>
+<style>
+/* ========================================
+   织念 - 全局设计系统
+   ======================================== */
+:root {
+  /* 温暖纸张 - 手账本风格 */
+  --primary: #c4763a;
+  --primary-light: #d4945c;
+  --primary-glow: rgba(196,118,58,0.15);
+  --bg-dark: #f5f0e8;
+  --bg-warm: #faf6ee;
+  --bg-card: #fffdf8;
+  --bg-card-hover: #fef9ef;
+  --bg-input: #f8f3ea;
+  --text-primary: #3d3428;
+  --text-secondary: #6b5d4d;
+  --text-muted: #9a8b78;
+  --border-color: #e8dfd2;
+  --border-subtle: #efe8dc;
+  /* 分类色 - 暖色调 */
+  --spark: #d4853a;
+  --knowledge: #7a9cc6;
+  --emotion: #c97a9a;
+  --experience: #7aa882;
+  --success: #6b9e6b;
+  --danger: #c76a5a;
+  --shadow-sm: 0 1px 3px rgba(61,52,40,0.06);
+  --shadow-md: 0 4px 16px rgba(61,52,40,0.08);
+  --shadow-lg: 0 8px 32px rgba(61,52,40,0.10);
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', 'Georgia', serif;
+  background: var(--bg-dark);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(212,133,58,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 100%, rgba(201,122,154,0.05) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  line-height: 1.65;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- 滚动条 --- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4cabb; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #c0b09a; }
+
+/* ========================================
+   App 容器 & 导航
+   ======================================== */
+.app { max-width: 800px; margin: 0 auto; padding-bottom: 80px; position: relative; }
+
+/* 顶部导航栏 */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(250,246,238,0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-primary);
+}
+.navbar-logo {
+  font-size: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: grayscale(80%) brightness(0.85) sepia(30%);
+}
+.yarn-ball-svg {
+  width: 28px;
+  height: 28px;
+  vertical-align: middle;
+}
+.navbar-actions { display: flex; gap: 12px; }
+
+/* Tab 导航 */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  z-index: 100;
+  background: rgba(253,251,245,0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 0;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-family: inherit;
+}
+.tab-item.active { color: var(--primary); }
+.tab-icon { font-size: 22px; margin-bottom: 2px; }
+.tab-item:hover .tab-icon { transform: scale(1.15); }
+
+/* FAB 按钮 */
+.fab {
+  position: fixed;
+  bottom: 84px;
+  right: calc(50% - 400px + 24px);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  font-size: 28px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 24px rgba(196,118,58,0.35);
+  transition: all 0.25s ease;
+  z-index: 90;
+  background: linear-gradient(135deg, #c4763a, #db9054);
+}
+.fab:hover { transform: scale(1.08) rotate(90deg); box-shadow: 0 8px 32px rgba(196,118,58,0.45); }
+@media (max-width: 850px) {
+  .fab { right: 24px; }
+}
+
+/* ========================================
+   页面视图（SPA 路由）
+   ======================================== */
+.page { display: none; padding: 24px; animation: fadeIn 0.35s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ========================================
+   首页 / 思维宫殿
+   ======================================== */
+.home-header { margin-bottom: 32px; }
+.greeting { font-size: 36px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; }
+.greeting-sub { font-size: 15px; color: var(--text-muted); }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+}
+.stat-num { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section-title span:last-child { font-size: 13px; color: var(--primary); font-weight: 400; cursor: pointer; }
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.cat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.cat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.cat-card.spark::before { background: var(--spark); }
+.cat-card.knowledge::before { background: var(--knowledge); }
+.cat-card.emotion::before { background: var(--emotion); }
+.cat-card.experience::before { background: var(--experience); }
+.cat-card:hover { transform: translateY(-4px); border-color: var(--border-color); background: var(--bg-card-hover); box-shadow: var(--shadow-lg); }
+.cat-card.spark:hover { box-shadow: 0 8px 30px rgba(212,133,58,0.18); }
+.cat-card.knowledge:hover { box-shadow: 0 8px 30px rgba(122,156,198,0.18); }
+.cat-card.emotion:hover { box-shadow: 0 8px 30px rgba(201,122,154,0.18); }
+.cat-card.experience:hover { box-shadow: 0 8px 30px rgba(122,168,130,0.18); }
+
+.cat-icon-wrap {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+  font-size: 26px;
+}
+.cat-card.spark .cat-icon-wrap { background: rgba(212,133,58,0.14); }
+.cat-card.knowledge .cat-icon-wrap { background: rgba(122,156,198,0.13); }
+.cat-card.emotion .cat-icon-wrap { background: rgba(201,122,154,0.13); }
+.cat-card.experience .cat-icon-wrap { background: rgba(122,168,130,0.13); }
+
+.cat-name { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.cat-desc { font-size: 13px; color: var(--text-muted); }
+.cat-count {
+  position: absolute; top: 18px; right: 18px;
+  font-size: 14px; color: var(--text-muted); font-weight: 600;
+}
+
+/* 最近记录 */
+.recent-list { display: flex; flex-direction: column; gap: 12px; }
+.recent-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px 22px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--shadow-sm);
+}
+.recent-item:hover { background: var(--bg-card-hover); transform: translateX(4px); box-shadow: var(--shadow-md); }
+.recent-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 12px; border-radius: 12px;
+  font-size: 12px; font-weight: 500;
+}
+.tag-spark { background: rgba(212,133,58,0.12); color: #a66a28; }
+.tag-knowledge { background: rgba(122,156,198,0.13); color: #567499; }
+.tag-emotion { background: rgba(201,122,154,0.13); color: #a55a7a; }
+.tag-experience { background: rgba(122,168,130,0.13); color: #5a8262; }
+.tag-link { background: var(--primary-glow); color: var(--primary); }
+.recent-time { font-size: 12px; color: var(--text-muted); }
+.recent-content { font-size: 14px; color: var(--text-secondary); line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.recent-links { margin-top: 10px; font-size: 12px; color: var(--primary); }
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .ei-icon { font-size: 56px; margin-bottom: 14px; opacity: 0.4; }
+.empty-state .ei-text { font-size: 16px; margin-bottom: 6px; }
+.empty-state .ei-hint { font-size: 13px; opacity: 0.7; }
+
+/* ========================================
+   分区列表页
+   ======================================== */
+.zone-header {
+  display: flex; align-items: center;
+  gap: 16px; margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.back-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 12px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  color: var(--text-secondary); font-size: 18px;
+  cursor: pointer; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.back-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--text-muted); }
+.detail-back-bar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 20px;
+}
+.detail-back-bar .back-btn { width: 34px; height: 34px; font-size: 16px; border-radius: 10px; }
+.detail-back-title { font-size: 15px; color: var(--text-muted); font-weight: 500; }
+.zone-icon-wrap {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+.zone-info { flex: 1; }
+.zone-name { font-size: 24px; font-weight: 700; }
+.zone-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+.zone-count {
+  font-size: 14px; color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 6px 16px; border-radius: 14px;
+}
+
+.card-list { display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
+.thought-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 22px 26px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.thought-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.tc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.tc-time { font-size: 12px; color: var(--text-muted); }
+.tc-badge {
+  font-size: 11px; color: var(--primary);
+  background: var(--primary-glow);
+  padding: 3px 10px; border-radius: 10px;
+}
+.tc-content { font-size: 15px; color: var(--text-primary); line-height: 1.75; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.tc-bottom { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+.kw-pill { font-size: 11px; color: var(--text-muted); background: var(--bg-input); padding: 3px 10px; border-radius: 8px; }
+
+/* ========================================
+   新建记录弹窗
+   ======================================== */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(61,52,40,0.35);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.modal-overlay.show { display: flex; }
+@media (min-width: 850px) {
+  .modal-overlay.show { align-items: center; }
+}
+
+.modal-panel {
+  width: 100%; max-width: 600px;
+  max-height: 90vh;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 28px 30px;
+  overflow-y: auto;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: 0 -8px 40px rgba(61,52,40,0.15);
+}
+@media (min-width: 850px) {
+  .modal-panel { border-radius: var(--radius-xl); max-height: 85vh; }
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.modal-title { font-size: 20px; font-weight: 600; }
+.modal-close-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.modal-close-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+/* 分类选择器 */
+.cat-selector { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.cat-opt {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 18px;
+  border: 2px solid transparent;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 13px; cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.cat-opt.selected { border-color: var(--cat-color, var(--primary)); color: var(--text-primary); background: rgba(255,255,255,0.04); }
+.cat-opt:hover { border-color: var(--border-color); }
+
+/* 输入区 */
+.textarea-input {
+  width: 100%; min-height: 220px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  color: var(--text-primary);
+  font-size: 16px; font-family: inherit;
+  line-height: 1.75;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.textarea-input:focus { border-color: var(--primary); }
+.textarea-input::placeholder { color: var(--text-muted); }
+.char-count { text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.char-count.warn { color: var(--danger); }
+
+/* 关键词预览 */
+.kw-preview {
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
+}
+.kw-preview-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
+.kw-preview-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.kw-add-row {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.kw-add-input {
+  flex: 1; padding: 6px 12px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 10px; font-size: 13px; font-family: inherit;
+  color: var(--text-primary); outline: none;
+  transition: border-color 0.2s;
+}
+.kw-add-input:focus { border-color: var(--primary); }
+.kw-add-input::placeholder { color: var(--text-muted); font-size: 12px; }
+.kw-add-btn {
+  padding: 6px 14px; border-radius: 10px; border: 1px dashed var(--border-color);
+  background: transparent; color: var(--text-muted); font-size: 13px;
+  cursor: pointer; font-family: inherit; white-space: nowrap;
+  transition: all 0.15s;
+}
+.kw-add-btn:hover { border-color: var(--primary); color: var(--primary); }
+.kw-tag {
+  background: var(--primary-glow);
+  color: var(--primary);
+  padding: 4px 12px; border-radius: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.kw-tag:hover { background: rgba(196,118,58,0.25); }
+.kw-tag .kw-remove {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.5;
+  cursor: pointer;
+}
+.kw-tag .kw-remove:hover { opacity: 1; }
+
+/* 快捷标签 */
+.quick-tags-area { margin-bottom: 18px; }
+.qt-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.qt-chip {
+  padding: 6px 16px; border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px; cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.qt-chip:hover { border-color: var(--text-muted); }
+.qt-chip.selected { border-color: var(--primary); color: var(--primary); background: var(--primary-glow); }
+
+/* 已选标签 */
+.sel-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.sel-tag {
+background: var(--primary-glow);
+color: var(--primary);
+padding: 5px 14px; border-radius: 12px;
+font-size: 13px; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.sel-tag:hover { opacity: 0.7; }
+
+/* 按钮组 */
+.btn-group { display: flex; gap: 12px; margin-top: 8px; }
+.btn {
+  padding: 12px 28px; border-radius: var(--radius-md);
+  border: none; cursor: pointer;
+  font-size: 15px; font-weight: 500;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-primary {
+  flex: 1;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+.btn-ghost:hover { background: var(--bg-input); }
+
+/* 关联推荐面板 */
+.link-rec-panel {
+background: var(--bg-input);
+border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px; margin-top: 20px;
+}
+.lrp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.lrp-title { font-size: 15px; font-weight: 600; color: var(--primary); }
+.lrp-skip { font-size: 13px; color: var(--text-muted); cursor: pointer; }
+.lrp-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px; margin-bottom: 10px;
+  cursor: pointer; transition: all 0.15s;
+}
+.lrp-item:hover { background: var(--bg-card-hover); }
+.lrp-score { text-align: center; min-width: 44px; }
+.lrp-score-num { font-size: 18px; font-weight: 700; color: var(--primary); }
+.lrp-score-lbl { font-size: 10px; color: var(--text-muted); }
+.lrp-info { flex: 1; overflow: hidden; }
+.lrp-preview { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.lrp-kws { display: flex; gap: 6px; margin-top: 4px; }
+.lrp-kw { font-size: 11px; color: var(--primary-light); opacity: 0.7; }
+.lrp-action { font-size: 13px; color: var(--primary); font-weight: 500; white-space: nowrap; }
+
+/* ========================================
+   详情页
+   ======================================== */
+.detail-page { max-width: 680px; margin: 0 auto; }
+.detail-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+}
+.dc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.dc-time { font-size: 13px; color: var(--text-muted); }
+.dc-content { font-size: 17px; line-height: 1.9; word-break: break-word; white-space: pre-wrap; }
+.dc-meta { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color); font-size: 13px; color: var(--text-muted); }
+
+.section-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.sb-label { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: block; }
+.sb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.sb-header .sb-label { margin-bottom: 0; }
+.link-cnt { font-size: 13px; color: var(--primary); }
+
+.linked-list { display: flex; flex-direction: column; gap: 10px; }
+.linked-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px; cursor: pointer;
+  transition: all 0.15s;
+}
+.linked-item:hover { background: var(--bg-card-hover); }
+.li-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 8px; flex-shrink: 0; }
+.li-info { flex: 1; overflow: hidden; }
+.li-content { font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.li-time { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block; }
+.li-unlink { font-size: 14px; color: var(--text-muted); cursor: pointer; padding: 4px 8px; flex-shrink: 0; }
+.li-unlink:hover { color: var(--danger); }
+
+.no-links-hint { text-align: center; padding: 18px; font-size: 13px; color: var(--text-muted); }
+.add-link-btn {
+  text-align: center; padding: 14px; margin-top: 10px;
+  border: 2px dashed var(--border-color); border-radius: var(--radius-sm);
+  color: var(--primary); font-size: 14px; cursor: pointer;
+  transition: all 0.15s;
+}
+.add-link-btn:hover { border-color: var(--primary); background: var(--primary-glow); }
+
+.rec-list { display: flex; flex-direction: column; gap: 10px; }
+.rec-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.rec-left { flex: 1; overflow: hidden; }
+.rec-preview { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.rec-common { display: flex; gap: 6px; margin-top: 4px; }
+.rec-common span { font-size: 11px; color: var(--primary-light); opacity: 0.7; }
+.rec-right { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.rec-score-badge { font-size: 13px; font-weight: 600; color: var(--primary); background: var(--primary-glow); padding: 3px 10px; border-radius: 8px; }
+.rec-connect { font-size: 13px; color: var(--primary); cursor: pointer; font-weight: 500; }
+
+.bottom-actions {
+  display: flex; gap: 12px; margin-top: 24px;
+}
+.ba-btn {
+  flex: 1; text-align: center; padding: 14px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius-md); cursor: pointer;
+  font-size: 15px; font-family: inherit;
+  color: var(--text-primary); transition: all 0.15s;
+}
+.ba-btn:hover { background: var(--bg-card-hover); }
+.ba-btn.danger:hover { background: rgba(180,80,60,0.08); border-color: rgba(180,80,60,0.3); }
+
+/* 关联选择器弹窗 */
+.picker-overlay {
+position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+background: rgba(61,52,40,0.35); z-index: 300;
+display: none; align-items: center; justify-content: center;
+animation: fadeIn 0.2s ease;
+}
+.picker-overlay.show { display: flex; }
+.picker-modal {
+  width: 90%; max-width: 520px; max-height: 75vh;
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  padding: 24px; overflow-y: auto;
+}
+.pm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.pm-title { font-size: 18px; font-weight: 600; }
+.pm-close { font-size: 24px; color: var(--text-muted); cursor: pointer; padding: 4px; }
+.pm-search input {
+  width: 100%; padding: 12px 16px;
+  background: var(--bg-input); border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary); font-size: 14px; font-family: inherit;
+  outline: none;
+}
+.pm-search input:focus { border-color: var(--primary); }
+.pm-search input::placeholder { color: var(--text-muted); }
+.pm-list { margin-top: 14px; }
+.pm-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 0; border-bottom: 1px solid var(--border-color);
+  cursor: pointer; transition: all 0.15s;
+}
+.pm-item:hover { background: var(--bg-input); margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: var(--radius-sm); border-bottom-color: transparent; }
+.pm-item-content { flex: 1; font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-item-time { font-size: 12px; color: var(--text-muted); flex-shrink: 0; }
+.pm-empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+
+/* ========================================
+   图谱页
+   ======================================== */
+.graph-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.gh-left .gh-title { font-size: 24px; font-weight: 700; display: flex; align-items: center; }
+.gh-logo-icon {
+  font-size: 22px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(122,168,130,0.18), rgba(100,140,180,0.14));
+  border: 1px solid rgba(122,168,130,0.25);
+  margin-right: 10px;
+}
+.gh-left .gh-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; display: block; }
+.gh-stats { display: flex; gap: 16px; }
+.gh-stat {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  padding: 10px 18px; border-radius: var(--radius-md);
+}
+.gh-num { font-size: 22px; font-weight: 700; color: var(--primary); }
+.gh-label { font-size: 11px; color: var(--text-muted); }
+
+.filter-bar { margin-bottom: 16px; }
+.filter-scroll { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-chip {
+  padding: 8px 20px; border-radius: 18px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px; cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.filter-chip.active { border-color: var(--chip-color, var(--primary)); color: var(--chip-color, var(--primary)); }
+.filter-chip:hover { border-color: var(--text-muted); }
+
+.canvas-container {
+  width: 100%; height: 62vh; min-height: 400px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  overflow: hidden; position: relative;
+}
+#graphCanvas { width: 100%; height: 100%; cursor: grab; }
+#graphCanvas:active { cursor: grabbing; }
+
+.node-popup {
+  position: fixed; bottom: -120%; left: 50%; transform: translateX(-50%);
+  width: 90%; max-width: 560px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  z-index: 150;
+  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -8px 40px rgba(61,52,40,0.2);
+}
+.node-popup.show { bottom: 20px; }
+.np-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.np-close { font-size: 22px; color: var(--text-muted); cursor: pointer; padding: 4px; }
+.np-content { font-size: 15px; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 8px; }
+.np-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.np-action {
+  text-align: center; padding: 14px;
+background: var(--primary-glow);
+border-radius: var(--radius-sm);
+color: var(--primary); font-size: 14px; font-weight: 500;
+cursor: pointer; transition: all 0.15s;
+}
+.np-action:hover { background: rgba(196,118,58,0.2); }
+
+.legend { display: flex; justify-content: center; gap: 24px; margin-top: 16px; padding: 12px 0; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+.legend-text { font-size: 12px; color: var(--text-muted); }
+.graph-tip { text-align: center; padding: 12px; font-size: 12px; color: var(--text-muted); }
+
+/* ========================================
+   响应式
+   ======================================== */
+@media (max-width: 480px) {
+  .page { padding: 16px; }
+  .greeting { font-size: 28px; }
+  .category-grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-num { font-size: 24px; }
+  .modal-panel { padding: 20px; border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+  @media (max-width: 850px) {
+    .modal-panel { border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+  }
+  .canvas-container { height: 55vh; }
+}
+
+/* Toast 提示 */
+.toast {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  color: var(--text-primary); padding: 12px 28px;
+  border-radius: var(--radius-md);
+  font-size: 14px; z-index: 9999;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 1.7s forwards;
+  pointer-events: none;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ========== 导航栏 ========== -->
+<nav class="navbar">
+  <div class="navbar-brand" onclick="switchTab('home')">
+    <span class="navbar-logo">🧶</span> 织念
+  </div>
+  <div class="navbar-actions">
+    <button class="tab-item" style="padding:6px 14px;" onclick="openNewCardModal(currentCategory||null)" title="新建记录">✏️ 记录</button>
+  </div>
+</nav>
+
+<!-- ========== 首页 / 思维宫殿 ========== -->
+<section id="page-home" class="page active">
+  <div class="home-header">
+    <div class="greeting" id="greetingText">下午好</div>
+    <div class="greeting-sub">编织零散的念头，找回长期思考的能力</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="totalCards">0</div><div class="stat-label">条记录</div></div>
+    <div class="stat-card"><div class="stat-num" id="totalLinks">0</div><div class="stat-label">条关联</div></div>
+    <div class="stat-card"><div class="stat-num" id="todayCount">0</div><div class="stat-label">今日新增</div></div>
+  </div>
+
+  <div class="section-title"><span>思维宫殿</span><span onclick="switchTab('home')">选择一个区域，开始记录</span></div>
+
+  <div class="category-grid">
+    <div class="cat-card spark" onclick="switchCategory('spark')">
+      <div class="cat-icon-wrap">⚡</div>
+      <div class="cat-name">灵光一现</div>
+      <div class="cat-desc">突发奇想 · 碎片灵感</div>
+      <div class="cat-count" id="countSpark">0</div>
+    </div>
+    <div class="cat-card knowledge" onclick="switchCategory('knowledge')">
+      <div class="cat-icon-wrap">📚</div>
+      <div class="cat-name">知识入脑</div>
+      <div class="cat-desc">学习笔记 · 干货整理</div>
+      <div class="cat-count" id="countKnowledge">0</div>
+    </div>
+    <div class="cat-card emotion" onclick="switchCategory('emotion')">
+      <div class="cat-icon-wrap">🌊</div>
+      <div class="cat-name">情绪流淌</div>
+      <div class="cat-desc">心情记录 · 自我对话</div>
+      <div class="cat-count" id="countEmotion">0</div>
+    </div>
+    <div class="cat-card experience" onclick="switchCategory('experience')">
+      <div class="cat-icon-wrap">✨</div>
+      <div class="cat-name">新鲜体验</div>
+      <div class="cat-desc">新活动 · 新认识的人</div>
+      <div class="cat-count" id="countExperience">0</div>
+    </div>
+  </div>
+
+  <div class="section-title" id="recentSectionTitle" style="display:none;"><span>最近记录</span><span onclick="showAllRecent()">查看全部 ›</span></div>
+  <div class="recent-list" id="recentList"></div>
+
+  <div class="empty-state" id="homeEmpty">
+    <div class="ei-icon">💡</div>
+    <div class="ei-text">还没有任何记录</div>
+    <div class="ei-hint" id="homeEmptyHint">点击右下角 <span style="color:var(--primary);cursor:pointer;font-weight:500;" onclick="openNewCardModal()">✏️</span> 或上方「记录」按钮，开始你的第一条思绪</div>
+  </div>
+</section>
+
+<!-- ========== 分区列表页 ========== -->
+<section id="page-category" class="page">
+  <div class="zone-header" id="zoneHeader">
+    <button class="back-btn" onclick="switchTab('home')" title="返回首页">←</button>
+    <div class="zone-icon-wrap" id="zoneIcon">⚡</div>
+    <div class="zone-info">
+      <div class="zone-name" id="zoneName">灵光一现</div>
+      <div class="zone-desc" id="zoneDesc">突发奇想 · 碎片灵感</div>
+    </div>
+    <div class="zone-count" id="zoneCount">0 条</div>
+  </div>
+  <div class="card-list" id="cardList"></div>
+  <div class="empty-state" id="categoryEmpty" style="display:none;">
+    <div class="ei-icon" id="emptyIcon">⚡</div>
+    <div class="ei-text" id="emptyText">还没有记录</div>
+    <div class="ei-hint" id="emptyHint">点击下方按钮开始记录</div>
+  </div>
+</section>
+
+<!-- ========== 详情页 ========== -->
+<section id="page-detail" class="page detail-page">
+  <!-- 动态渲染 -->
+</section>
+
+<!-- ========== 图谱页 ========== -->
+<section id="page-graph" class="page">
+  <div class="graph-header">
+    <div class="gh-left">
+      <div class="gh-title"><span class="gh-logo-icon">🪢</span>关联图谱</div>
+      <div class="gh-sub">可视化你的思维网络</div>
+    </div>
+    <div class="gh-stats">
+      <div class="gh-stat"><div class="gh-num" id="graphNodeCount">0</div><div class="gh-label">节点</div></div>
+      <div class="gh-stat"><div class="gh-num" id="graphEdgeCount">0</div><div class="gh-label">连线</div></div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-scroll" id="filterChips"></div>
+  </div>
+
+  <div class="canvas-container" id="canvasContainer">
+    <canvas id="graphCanvas"></canvas>
+  </div>
+
+  <div class="empty-state" id="graphEmpty" style="display:none;">
+    <div class="ei-icon" style="font-size:56px;line-height:1;">🪢</div>
+    <div class="ei-text">还没有思维网络</div>
+    <div class="ei-hint">开始记录并建立关联，这里会生长出你的知识图谱</div>
+  </div>
+
+  <div class="legend" id="graphLegend"></div>
+  <div class="graph-tip" id="graphTip" style="display:none;">👆 点击节点查看详情 · 拖拽移动节点位置</div>
+
+  <div class="node-popup" id="nodePopup">
+    <div class="np-header">
+      <span id="npTag"></span>
+      <span class="np-close" onclick="closeNodePopup()">✕</span>
+    </div>
+    <div class="np-content" id="npContent"></div>
+    <div class="np-meta" id="npMeta"></div>
+    <div class="np-action" id="npAction" onclick="goDetailFromGraph()">查看详情 →</div>
+  </div>
+</section>
+
+</div><!-- /.app -->
+
+<!-- ========== Tab Bar ========== -->
+<nav class="tab-bar">
+  <button class="tab-item active" data-tab="home" onclick="switchTab('home')">
+    <span class="tab-icon">🏛️</span><span>宫殿</span>
+  </button>
+  <button class="tab-item" data-tab="new" onclick="openNewCardModal(currentCategory||null)">
+    <span class="tab-icon">✏️</span><span>记录</span>
+  </button>
+  <button class="tab-item" data-tab="graph" onclick="switchTab('graph')">
+    <span class="tab-icon" style="color:var(--experience);">🪢</span><span>图谱</span>
+  </button>
+</nav>
+
+<!-- ========== 新建记录弹窗 ========== -->
+<div class="modal-overlay" id="newCardModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div class="modal-title">📝 新建记录</div>
+      <button class="modal-close-btn" onclick="closeNewCardModal()">✕</button>
+    </div>
+
+    <div class="cat-selector" id="catSelector"></div>
+
+    <textarea class="textarea-input" id="newContent" placeholder="记录下此刻的想法..." maxlength="2000" oninput="onContentInput()"></textarea>
+    <div class="char-count" id="charCount"><span id="charNum">0</span> / 2000</div>
+
+<div class="kw-preview" id="kwPreview" style="display:none;">
+<span class="kw-preview-label">🔑 提取的关键词 <small style="font-weight:400;opacity:0.6;">（点击 × 移除）</small></span>
+<div class="kw-preview-tags" id="kwTags"></div>
+<div class="kw-add-row">
+  <input class="kw-add-input" id="kwAddInput" placeholder="添加自定义关键词..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomKeyword()}">
+  <button class="kw-add-btn" onclick="addCustomKeyword()">+ 添加</button>
+</div>
+</div>
+
+    <div class="quick-tags-area" id="quickTagsArea" style="display:none;">
+      <span class="kw-preview-label">🏷️ 快捷标签</span>
+      <div class="qt-row" id="qtRow"></div>
+    </div>
+
+    <div class="sel-tags" id="selTags"></div>
+
+    <div class="btn-group">
+      <button class="btn btn-ghost" onclick="closeNewCardModal()">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveNewCard()" disabled>💾 存入织念</button>
+    </div>
+
+    <div class="link-rec-panel" id="linkRecPanel" style="display:none;">
+      <div class="lrp-header">
+        <span class="lrp-title">🔗 发现可能关联的记录</span>
+        <span class="lrp-skip" onclick="skipLinkRec()">跳过</span>
+      </div>
+      <div id="lrpList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 关联选择器弹窗 ========== -->
+<div class="picker-overlay" id="linkPickerOverlay">
+  <div class="picker-modal">
+    <div class="pm-header">
+      <div class="pm-title">选择要关联的记录</div>
+      <span class="pm-close" onclick="closeLinkPicker()">✕</span>
+    </div>
+    <div class="pm-search">
+      <input type="text" placeholder="搜索关键词..." id="pickerSearch" oninput="onPickerSearch()">
+    </div>
+    <div class="pm-list" id="pickerList"></div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// 织念 ZhiNian - 核心引擎
+// ========================================
+
+const STORAGE_KEY_CARDS = 'zhinian_cards'
+const STORAGE_KEY_LINKS = 'zhinian_links'
+
+const CATEGORIES = [
+  { key: 'spark', name: '灵光一现', icon: '⚡', color: '#f6b93b', desc: '突发奇想 · 碎片灵感',
+    quickTags: ['创意', '想法', '待探索', '疑问', '顿悟'], placeholder: '✨ 突然冒出的灵感，快记下来...' },
+  { key: 'knowledge', name: '知识入脑', icon: '📚', color: '#4a90d9', desc: '学习笔记 · 干货整理',
+    quickTags: ['读书', '课程', '文章', '视频', '播客'], placeholder: '📝 今天学到了什么新知识？' },
+  { key: 'emotion', name: '情绪流淌', icon: '🌊', color: '#e056fd', desc: '心情记录 · 情绪觉察',
+    quickTags: ['开心', '焦虑', '平静', '感动', '疲惫'], placeholder: '💭 此刻的心情如何？' },
+  { key: 'experience', name: '新鲜体验', icon: '✨', color: '#7bed9f', desc: '拓展边界 · 新的尝试',
+    quickTags: ['第一次', '新朋友', '新地方', '新技能', '新食物'], placeholder: '🌟 尝试了什么新鲜事？' }
+]
+
+let currentCategory = null // 当前浏览的分类
+let currentCardId = null  // 当前查看的卡片ID
+let graphFilter = 'all'
+
+// ---- 数据操作 ----
+
+function loadCards() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CARDS)) || [] } catch(e) { return [] }
+}
+function saveCards(cards) { localStorage.setItem(STORAGE_KEY_CARDS, JSON.stringify(cards)) }
+function loadLinks() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_LINKS)) || [] } catch(e) { return [] }
+}
+function saveLinks(links) { localStorage.setItem(STORAGE_KEY_LINKS, JSON.stringify(links)) }
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+}
+
+function addCard(data) {
+const cards = loadCards()
+const card = {
+id: generateId(),
+content: data.content,
+category: data.category || 'spark',
+tags: data.tags || [],
+keywords: data.keywords || extractKeywords(data.content),
+createdAt: new Date().toISOString(),
+updatedAt: new Date().toISOString()
+}
+cards.unshift(card)
+saveCards(cards)
+autoLinkRecommend(card)
+return card
+}
+
+function updateCard(id, updates) {
+const cards = loadCards()
+const idx = cards.findIndex(c => c.id === id)
+if (idx === -1) return null
+// 如果传了 keywords 就用传入的，否则如果改了内容就重新提取，否则保留原有关键词
+const newKeywords = updates.keywords !== undefined ? updates.keywords : (updates.content ? extractKeywords(updates.content) : cards[idx].keywords)
+cards[idx] = { ...cards[idx], ...updates, keywords: newKeywords, updatedAt: new Date().toISOString() }
+  saveCards(cards)
+  return cards[idx]
+}
+
+function deleteCard(id) {
+  let cards = loadCards()
+  cards = cards.filter(c => c.id !== id)
+  saveCards(cards)
+  let links = loadLinks()
+  links = links.filter(l => l.sourceId !== id && l.targetId !== id)
+  saveLinks(links)
+}
+
+function getCardsByCategory(cat) {
+  return loadCards().filter(c => c.category === cat)
+}
+
+function addLink(sourceId, targetId) {
+  if (sourceId === targetId) return null
+  const links = loadLinks()
+  const exists = links.find(l => (l.sourceId === sourceId && l.targetId === targetId) || (l.sourceId === targetId && l.targetId === sourceId))
+  if (exists) return null
+  const link = { id: generateId(), sourceId, targetId, createdAt: new Date().toISOString() }
+  links.push(link)
+  saveLinks(links)
+  return link
+}
+
+function removeLink(linkId) {
+  const links = loadLinks().filter(l => l.id !== linkId)
+  saveLinks(links)
+}
+
+function getLinkedIds(cardId) {
+  const links = loadLinks()
+  const ids = new Set()
+  links.forEach(l => { if (l.sourceId === cardId) ids.add(l.targetId); if (l.targetId === cardId) ids.add(l.sourceId) })
+  return Array.from(ids)
+}
+
+function getLinkedCards(cardId) {
+  const ids = new Set(getLinkedIds(cardId))
+  return loadCards().filter(c => ids.has(c.id))
+}
+
+// ---- 关键词提取（实词提取 + 词典增强 + TF权重） ----
+
+/**
+ * 核心思路转变：
+ * 旧版：词典匹配为主 -> 未登录词容易丢失或碎片化
+ * 新版：保留所有实词片段 -> 用停用词表做排除过滤 -> 词典用于加权提升
+ * 这样地名、专有名词、形容词短语、行业术语等都能被正确提取
+ */
+
+// ====== 停用词表（纯虚词/无意义词，只排除这些） ======
+const STOP_WORDS = new Set([
+  // === 代词 ===
+  '我','你','他','她','它','我们','你们','他们','她们','它们','咱们','自己','本身','别人','人家','大家','谁',
+  '什么','哪','哪里','哪个','哪些','这','那','这个','那个','这些','那些','这里','那里','某',
+  // === 助词/介词/连词（最高频的虚词核心） ===
+  '的','了','是','在','有','和','就','不','人','都','一','上','也','很','到','说','要','去',
+  '会','着','没有','看','好','把','被','让','给','从','向','往','对','比','跟','与','或',
+  '及','等','等等','之','于','而','以','其','所','者','此','该','则','乃','且','但',
+  // === 语气词 ===
+  '啊','吧','呢','吗','哦','哈','嗯','呀','嘛','哇','噢','呵','唉','哎','哟','喂','嘿','诶','额','罢',
+  // === 副词/连词（语义较虚） ===
+  '因为','所以','但是','然后','可以','可能','已经','正在','还','也','又','再','更','最','太',
+  '非常','十分','特别','比较','只是','就是','那样','的话','还是','或者','其实','虽然','即使',
+  '除非','无论','不管','只要','一旦','如果','要是','倘若','假如','不管','无论','即便',
+  // === 认知/感官动词（单独出现时常为语法成分） ===
+  '觉得','感觉','想','知道','认为','以为','希望','愿意','打算','需要','应该','必须','一定',
+  '或许','大概','也许','可能','能否','是否','来的话','来说','来看','来讲','而言','一方面',
+  // === 数量/程度（极高频且无具体指代） ===
+  '一个','一种','一样','一次','一起','一般','一直','一些','一点','多少','几个','某些',
+  '很','太','更','最','挺','较','稍','略','颇','甚','极其','过于','有点',
+  // === 时间词（除非是专有节日名） ===
+  '现在','今天','明天','昨天','时候','目前','当前','平时','通常','经常','有时','偶尔',
+  // === 常见动词骨架（单独使用时意义模糊） ===
+  '做','搞','弄','打','拿','放','让','叫','请','用','试','看','听','说','讲','问','答',
+  '来','去','回','进','出','上','下','起','开','关','动','走','跑','飞','站','坐','躺',
+  // === 2字切分产生的常见虚词/无意义片段 ===
+  '那段','这段','哪段','此段','那段','某段','一段','每段',
+  '那个','这个','哪个','某个','一个','每个','整个',
+  '那种','这种','哪种','某种','一样','这般','那样',
+  '那边','这边','哪边','那边','一边','这边',
+  '如何','怎么','为何','凭啥','为啥',
+  '的话','而已','罢了','总之','总而言之',
+  '其中','之后','之前','之中','以上','以下','之内','之外',
+  '如果','虽然','即使','除非','无论','不管','不管','无论','即便',
+  '一切','所有','全部','任何','若干','有些','其他','别的','另外',
+  '十分','非常','极其','格外','尤其','甚至','反而','毕竟','到底','究竟',
+  '可以','能够','应该','必须','需要','打算','准备','希望','想要','愿意'
+])
+
+// ====== 增强词典（用于优先匹配 + 加权，但不限于此） ======
+const DICT_RAW = [
+  // === 4字+ 术语概念 ===
+  '人工智能','机器学习','深度学习','神经网络','自然语言处理','计算机视觉','数据分析','产品设计',
+  '用户体验','前端开发','后端开发','全栈开发','敏捷开发','持续集成','版本控制','开源项目',
+  '商业模式','增长策略','用户增长','内容创作','知识管理','时间管理','项目管理','远程办公',
+  '自由职业','自我提升','情绪管理','心理健康','人际关系','沟通技巧','演讲表达','写作技巧',
+  '读书笔记','学习方法','思维导图','信息收集','碎片化时间','长期主义','复利效应','刻意练习',
+  '第一性原理','元认知','元学习','异步编程','面向对象','函数式编程','响应式设计','跨平台',
+  '微服务','分布式系统','数据库','缓存机制','API接口','产品经理','交互设计','视觉设计',
+  '用户研究','AB测试','数据驱动','关键指标','转化率','留存率','日活','月活','供应链',
+  '营销活动','品牌推广','社交媒体','搜索引擎','SEO优化','内容运营','社区运营','私域流量',
+  '公域流量','投资理财','股票基金','数字货币','区块链','元宇宙','虚拟现实','增强现实',
+  '物联网','云计算','边缘计算','气候变化','可持续发展','碳中和','新能源','电动汽车',
+  '自动驾驶','智慧城市','生物技术','基因编辑','免疫治疗','认知偏差','心理效应',
+  '决策框架','习惯养成','拖延症','职业规划','面试技巧','薪资谈判','人脉拓展','个人品牌',
+  '上下文协议','大语言模型','提示词工程','Agent智能体','多模态','RAG检索增强',
+  '注意力机制','Transformer','预训练模型','微调','Fine-tuning','零样本学习','少样本学习',
+  '强化学习','监督学习','无监督学习','半监督学习','迁移学习','联邦学习','图神经网络',
+  '卷积神经网络','循环神经网络','生成对抗网络','扩散模型','自回归模型','嵌入向量',
+  '向量数据库','语义搜索','相似度计算','余弦相似度','聚类算法','分类算法','回归分析',
+  '异常检测','推荐系统','协同过滤','内容过滤','冷启动','特征工程','数据清洗','数据管道',
+  'ETL流程','批处理','流处理','事件驱动','消息队列','发布订阅','最终一致性','CAP定理',
+  'BASE理论','幂等性','幂等设计','熔断降级','限流削峰','服务网格','ServiceMesh',
+  '容器编排','声明式API','不可变基础设施','基础设施即代码','GitOps','DevOps','DevSecOps',
+  '站点可靠性','错误预算','SLA服务水平','SLO服务目标','SLI服务指标','oncall值班',
+  // === 3字 词 ===
+  '互联网','大数据','云原生','低代码','无代码','高并发','低延迟','源代码','编译器','解释器',
+  '运行时','算法题','架构师','工程师','程序员','设计师','分析师','创业者','投资者','管理者',
+  '关键词','语义网','知识图谱','关联图谱','思维模型','心智模型','学习曲线','技能树','能力圈',
+  '舒适区','番茄钟','时间块','日程表','待办清单','复盘总结','周报月报','年度计划','SMART原则',
+  '冥想练习','正念呼吸','身体扫描','感恩日记','情绪日记','自由书写','晨间笔记','晚间回顾',
+  '批判性思维','创造性思维','系统性思维','设计思维','逆向思维','第一原理','思维实验',
+  '类比推理','信息过载','注意力管理','深度工作','心流状态','多任务处理','单线程工作',
+  '社交网络','即时通讯','电子邮件','视频会议','在线协作','文档协作','代码审查','技术分享',
+  '开源贡献','敏捷迭代','最小可行产品','产品市场匹配','客户生命周期','获客成本',
+  '生命周期价值','净推荐值','五一劳动','国庆节','春节联','中秋节','清明节','端午节',
+  '重阳节','元宵节','情人节','圣诞节','万圣节','感恩节','复活节','泼水节','腊八节',
+  // === 地名（常见中国城市） ===
+  '北京','上海','广州','深圳','杭州','南京','苏州','成都','武汉','重庆','西安','长沙',
+  '天津','青岛','大连','厦门','宁波','无锡','合肥','郑州','福州','济南','哈尔滨','沈阳',
+  '长春','石家庄','太原','南昌','昆明','贵阳','南宁','海口','兰州','银川','西宁','呼和浩特',
+  '乌鲁木齐','拉萨','三亚','珠海','佛山','东莞','惠州','烟台','威海','泉州','南通','常州',
+  '扬州','台州','温州','绍兴','嘉兴','金华','湖州','衢州','丽水','舟山','黄山','安庆','芜湖',
+  '香港','澳门','台湾','台北','高雄','台中','台南','新北','桃园',
+  '日本','韩国','朝鲜','蒙古','印度','越南','泰国','马来西亚','新加坡','印尼','菲律宾',
+  '美国','加拿大','墨西哥','巴西','英国','法国','德国','意大利','西班牙','葡萄牙','瑞士',
+  '荷兰','比利时','奥地利','瑞典','挪威','丹麦','芬兰','俄罗斯','乌克兰','波兰','土耳其',
+  '希腊','埃及','南非','澳大利亚','新西兰','太平洋','大西洋','印度洋','北冰洋','南极洲',
+  '珠穆朗玛','泰山','华山','衡山','恒山','嵩山','黄山','庐山','峨眉山','武当山','青城山',
+  '普陀山','九华山','五台山','雁荡山','武夷山','井冈山','长白山','天山','昆仑山','秦岭',
+  '长江','黄河','珠江','淮河','海河','辽河','松花江','黑龙江','雅鲁藏布江','澜沧江','怒江',
+  '太湖','洞庭湖','鄱阳湖','洪泽湖','巢湖','青海湖','纳木错','西湖','东湖','南湖','大明湖',
+  '千岛湖','洱海','泸沽湖','瘦西湖','昆明湖','北海','大海','东海','南海','渤海','黄海',
+  // === 节日/时间专属词 ===
+  '五一','六一','七一','八一','十一','中秋','端午','清明','重阳','元宵','除夕','春节',
+  '元旦','妇女节','植树节','劳动节','青年节','儿童节','建党节','建军节','教师节','国庆节',
+  '万圣节','感恩节','圣诞节','情人节','母亲节','父亲节','护士节','记者节','程序员节',
+  '节假日','周末','假期','寒暑假','年假','调休','补班','法定节假日','小长假','黄金周',
+  // === 专属称呼/称谓 ===
+  '老板','上司','下属','同僚','前辈','后辈','学长','学姐','学弟','学妹','导师','教练',
+  '师傅','徒弟','徒孙','恩师','知己','闺蜜','死党','发小','同学','同桌','室友','邻居',
+  '舍友','房东','房客','顾客','乘客','游客','观众','听众','读者','作者','博主','UP主',
+  '主播','网红','达人','大咖','大神','小白','萌新','老鸟','资深','专家','学者','教授',
+  '讲师','助教','研究员','工程师','设计师','产品经理','项目经理','运营总监','技术总监',
+  'CTO','CEO','CFO','COO','CMO','CPO','VP','总监','主管','组长','队长','班长','会长',
+  '理事','股东','董事','监事','创始人','合伙人','投资人','天使','LP','GP',
+  // === 形容词/状态词（重要！用户明确要求保留） ===
+  '焦虑','开心','难过','生气','失望','满意','担心','着急','困惑','惊讶','感动','感激',
+  '后悔','愧疚','自豪','羞耻','尴尬','无奈','无聊','充实','疲惫','轻松','紧张','放松',
+  '兴奋','平静','烦躁','沮丧','绝望','希望','害怕','恐惧','勇敢','胆怯','自信','自卑',
+  '乐观','悲观','积极','消极','主动','被动','认真','敷衍','勤奋','懒惰','聪明','愚蠢',
+  '灵活','呆板','幽默','严肃','随和','固执','开朗','内向','外向','温和','暴躁','冷静',
+  '冲动','理性','感性','谨慎','鲁莽','果断','犹豫','坦诚','虚伪','真诚','虚假','可靠',
+  '稳定','脆弱','坚韧','软弱','强大','弱小','富裕','贫穷','健康','生病','长寿','短命',
+  '年轻','年老','成熟','幼稚','稳重','轻浮','优雅','粗俗','精致','粗糙','漂亮','丑陋',
+  '高大','矮小','胖瘦','苗条','强壮','虚弱','迅速','缓慢','敏捷','迟钝','清晰','模糊',
+  '简单','复杂','容易','困难','安全','危险','舒适','难受','方便','麻烦','便宜','昂贵',
+  '重要','次要','紧急','普通','特殊','独特','常见','罕见','典型','极端','完美','缺陷',
+  '全新','陈旧','先进','落后','流行','过时','经典','时髦','传统','现代','古老','新兴',
+  '有效','无效','高效','低效','优质','劣质','正规','非法','合法','合规','违规',
+  '公开','私密','透明','隐蔽','明显','隐藏','直接','间接','永久','临时','长期','短期',
+  '及时','延误','准时','提前','推迟','持续','间断','频繁','稀少','充足','短缺','丰富',
+  '单调','多样','单一','多元','统一','分散','集中','独立','依赖','自主','被动','主动',
+  '深刻','肤浅','全面','片面','客观','主观','准确','错误','精确','大概','确定','不确定',
+  '缓解','加重','改善','恶化','恢复','反复','波动','稳定','上升','下降','增长','萎缩',
+  '扩展','收缩','融合','分离','连接','断开','结合','拆解','组装','构建','解构','重构',
+  // === 2字 实词（大规模覆盖） ===
+  '灵感','想法','思考','记录','整理','归纳','总结','分析','洞察','发现','创意','方案','策略',
+  '目标','计划','行动','执行','反馈','优化','改进','迭代','创新','突破','挑战','机遇','风险',
+  '收益','成本','价值','效率','质量','原理','本质','规律','逻辑','框架','体系','结构',
+  '数据','信息','知识','经验','技能','能力','天赋','潜力','成长','进步','提升','学习',
+  '训练','实践','应用','阅读','写作','输出','输入','记忆','理解','掌握','熟练','精通',
+  '专业','业余','兴趣','爱好','热情','动力','习惯','坚持','专注','自律','复盘','反思',
+  '情绪','心情','感受','体验','觉察','接纳','释放','调节','平衡','压力','抑郁',
+  '迷茫','困惑','恐惧','愤怒','悲伤','快乐','满足','幸福','安心','骄傲','谦虚','嫉妒',
+  '羡慕','羞愧','内疚','遗憾','怀念','期待','憧憬','担忧','烦躁','疲惫','兴奋','激动',
+  '关系','友谊','爱情','亲情','家庭','职场','团队','领导','同事','伙伴','客户',
+  '用户','受众','群体','社群','圈子','粉丝','关注者','邻居','同乡','校友','战友','偶像',
+  '工作','项目','任务','流程','系统','工具','方法','技巧','规范','标准','模式','范式',
+  '会议','汇报','演示','提案','评审','验收','交付','上线','发布','版本','更新','升级',
+  '代码','程序','软件','硬件','网络','服务器','客户端','浏览器','移动端','桌面端','小程序',
+  '网站','设计','开发','测试','部署','运维','监控','日志','性能','安全','加密','认证',
+  '授权','权限','接口','产品','功能','需求','场景','用例','路径','页面','组件','模块',
+  '库','包','插件','扩展','配置','环境','语言','语法','语义','类型','变量','函数','对象',
+  '类','实例','属性','方法','事件','回调','异步','同步','数组','集合','映射','列表',
+  '队列','栈','树','图','节点','边','索引','键','值','指针','引用','内存','算法',
+  '排序','搜索','递归','动态规划','贪心','回溯','分治','哈希','二叉','红黑','前端',
+  '后端','全栈','服务端','中间件','代理','网关','负载均衡','容器','镜像','集群','副本',
+  '分片','数据库','关系型','非结构化','文档型','列存储','时序','查询','事务','缓存',
+  '消息队列','发布订阅','点对点','广播','路由','过滤','死信','HTTP','HTTPS','TCP','UDP',
+  'REST','GraphQL','RPC','WebSocket','JSON','XML','YAML','HTML','CSS','JavaScript','TypeScript',
+  'Python','Java','Go','Rust','React','Vue','Angular','Svelte','Next','Nuxt','Node','Deno','Bun',
+  'Express','FastAPI','Django','Spring','Webpack','Vite','Rollup','esbuild','Babel','PostCSS','Tailwind',
+  'Sass','Less','Jest','Mocha','Cypress','Git','GitHub','GitLab','Docker','Kubernetes','CI','CD',
+  'Linux','Unix','macOS','Windows','Shell','Bash','终端','命令行','编辑器','IDE','VSCode','Vim',
+  'Emacs','Xcode','Android','Studio','IntelliJ','苹果','谷歌','微软','亚马逊','Meta','字节',
+  '腾讯','阿里','美团','百度','华为','小米','OPPO','vivo','iPhone','iPad','Mac','安卓',
+  '鸿蒙','微信','支付宝','抖音','快手','小红书','B站','微博','知乎','豆瓣','淘宝','天猫',
+  '京东','拼多多','携程','滴滴','电商','零售','O2O','B2B','B2C','C2C','SaaS','PaaS','IaaS',
+  '订阅制','会员制','免费增值','广告变现','流量','转化','漏斗','留存','促活','召回','推荐',
+  '搜索','分发','裂变','传播','口碑','品牌','IP','内容','图文','短视频','直播','播客','音频',
+  '电子书','课程','专栏','星球','知识付费','带货','种草','拔草','私域','公域','投放','ROI','GMV',
+  '读书','电影','音乐','游戏','运动','健身','跑步','游泳','瑜伽','骑行','登山','旅行',
+  '摄影','烹饪','咖啡','茶饮','美食','甜点','烘焙','调酒','穿搭','美妆','护肤','香水',
+  '时尚','潮流','奢侈品','投资','储蓄','保险','税务','房产','租房','装修','家具','家电',
+  '汽车','驾照','出行','机票','酒店','民宿','露营','徒步','潜水','滑雪','网球',
+  '羽毛球','乒乓球','篮球','足球','排球','棒球','高尔夫','棋牌','麻将','扑克','桌游',
+  '英语','日语','韩语','法语','德语','翻译','口语','听力','词汇','语法','发音','考试',
+  '证书','学历','考研','考公','考编','留学','移民','签证','护照','户籍','社保','公积金',
+  '医保','养老','医疗','教育','小学','中学','高中','大学','研究生','博士','硕士','学士',
+  '学位','毕业','就业','创业','副业','招聘','简历','面试','Offer','薪资','奖金','期权',
+  '股权','晋升','跳槽','离职','退休','养老金','实习','兼职','外包','派遣','猎头',
+  '婚姻','恋爱','约会','相亲','分手','离婚','单身','丁克','育儿','亲子','婆媳','岳父母',
+  '婆婆','公公','岳父','岳母','伴侣','配偶','前任','暗恋','表白','求婚','订婚','结婚纪念日',
+  '哲学','心理学','社会学','经济学','物理学','化学','生物学','历史学','文学','艺术学',
+  '法学','医学','数学','统计学','地理学','天文学','地质学','生态学','人类学','政治学',
+  '语言学','考古学','新闻学','传播学','教育学','建筑学','土木工程','机械工程','电子工程',
+  '量子力学','相对论','进化论','博弈论','信息论','控制论','混沌理论','复杂系统','涌现',
+  '熵增','熵减','热力学','电磁学','光学','声学','流体力学','材料科学','纳米技术','基因',
+  '染色体','DNA','RNA','蛋白质','细胞','神经元','突触','神经递质','激素','免疫系统',
+  '佛学','道家','儒家','基督教','伊斯兰教','佛教','禅修','打坐','祈祷','仪式','信仰','灵性',
+  '冥想','正念','太极','气功','推拿','针灸','拔罐','艾灸','刮痧','脉象','舌诊',
+  '咖啡因','多巴胺','内啡肽','皮质醇','褪黑素','血清素','胰岛素','肾上腺素','新陈代谢',
+  '碳水化合物','脂肪','维生素','矿物质','膳食纤维','卡路里','BMI','体脂率','心率','血压',
+  '血糖','血脂','胆固醇','尿酸','过敏','湿疹','痤疮','脱发','失眠','打鼾','睡眠呼吸暂停',
+  '气候','天气','地震','台风','暴雨','干旱','洪涝','污染','排放','回收','可持续','生态',
+  '环保','政治','经济','文化','军事','外交','贸易','关税','制裁','通胀','通缩','衰退','复苏',
+  '周期','民主','共和','君主','联邦','宪政','法治','人权','自由','平等','公正','正义','权利',
+  '义务','城市','乡村','城镇','社区','街道','建筑','交通','地铁','公交','出租','共享单车',
+  '高铁','飞机','火车','轮船','游艇','直升机','热气球','飞船','火箭','卫星','空间站',
+  '农业','工业','服务业','制造业','手工业','能源','电力','石油','天然气','煤炭','太阳能',
+  '风能','核能','水力','地热','潮汐','生物质','氢能','芯片','半导体','显示屏','传感器',
+  '电池','摄像头','扬声器','麦克风','存储','内存','硬盘','SSD','GPU','CPU','主板','显卡',
+  // === 英文术语（AI/Tech相关重点补充） ===
+  'MCP','Anthropic','OpenAI','ChatGPT','GPT4','GPT3','Claude','Gemini','Llama','Mistral',
+  'Prompt','Token','Context','Embedding','Vector','RAG','Finetune','Inference','Training',
+  'API','SDK','CLI','GUI','IDE','REST','GraphQL','WebSocket','Webhook','CRUD',
+  'OAuth','JWT','RBAC','SSO','LDAP','SAML','OIDC','MFA','TOTP','2FA','HTTPS','TLS','SSL',
+  'SSH','SCP','RSYNC','FTP','SFTP','SMTP','IMAP','POP3','DNS','TCP','UDP','ICMP','ARP',
+  'JSON','XML','YAML','TOML','INI','CSV','PDF','DOC','XLS','PPT','DOM','BOM','CSSOM',
+  'WASM','V8','SpiderMonkey','JS','TS','JSX','TSX','npm','yarn','pnpm','pip','conda','cargo',
+  'composer','gem','maven','gradle','make','cmake','git','svn','hg','docker','k8s','helm',
+  'terraform','ansible','jenkins','travis','circleci','github','gitlab','bitbucket','gitee',
+  'vercel','netlify','heroku','railway','fly','render','aws','gcp','azure','aliyun','tencent',
+  'huawei','cloud','oracle','ibm','vmware','openstack','linux','unix','bsd','posix','kernel',
+  'shell','bash','zsh','fish','powershell','cmd','terminal','cpu','gpu','tpu','npu','ram','rom',
+  'ssd','hdd','nvme','usb','hdmi','dp','vga','typec','lan','wan','vpn','cdn','dhcp','nat',
+  'firewall','proxy','loadbalancer','gateway','sql','nosql','mysql','postgres','mongodb','redis',
+  'elasticsearch','sqlite','dynamodb','cassandra','kafka','rabbitmq','rocketmq','activemq','zeromq',
+  'nats','pulsar','pravega','redisstream','redux','vuex','mobx','zustand','jotai','recoil',
+  'nextjs','nuxtjs','remix','sveltekit','parcel','snowpack','turbopack','swc','bootstrap','bulma',
+  'foundation','semanticui','antdesign','elementui','materialui','vitest','jasmine','playwright',
+  'puppeteer','selenium','testinglibrary','husky','lintstaged','commitlint','editorconfig','precommit',
+  'figma','sketch','adobe','photoshop','illustrator','aftereffects','blender','maya','cinema4d',
+  'unity','unreal','godot','threejs','babylonjs','pixijs','phaser','cocos','laya','egret',
+  'ux','ui','ia','ixd','usability','accessibility','a11y','responsive','adaptive','mobilefirst',
+  'pmf','mvp','roi','kpi','okr','nps','cac','ltv','arpu','dau','mau','churn','retention','conversion',
+  'aarrr','rice','moscow','swot','pest','smart','pdca','5w2h','mece','scamper','designthinking',
+  'agile','scrum','kanban','xp','waterfall','devops','gitops','shiftleft',
+  // === 行业/圈层热词 ===
+  '赋能','抓手','闭环','沉淀','打通','链路','落地','对齐','拉通','复盘','心智',
+  '颗粒度','感知度','耦合度','复用性','可扩展','可维护','鲁棒性','健壮性','高可用',
+  '低耦合','高内聚','单一职责','开闭原则','依赖倒置','里氏替换','接口隔离','迪米特',
+  'SOLID','DRY','KISS','YAGNI','DDD','CQRS','EventSourcing','Saga','Outbox',
+  'TCC','本地消息表','最大努力通知','补偿','重试','熔断','舱壁模式','Sidecar',
+  'Ambassador','BFF','BackendForFrontend','CORS','CSP','XSS','CSRF','SQL注入',
+  'DDoS','CC攻击','中间人','撞库','拖库','洗库','社工','钓鱼','勒索',
+  '零信任','零知识证明','同态加密','安全多方计算','联邦学习','隐私计算','差分隐私',
+  '数字孪生','数字转型','产业互联网','工业互联网','车联网','星联网','卫星互联网',
+  '脑机接口','基因编辑','mRNA疫苗','靶向治疗','辅助生殖','抗衰老','长寿研究',
+  '延寿','寿命','预期寿命','健康寿命','生活质量','幸福感指数','焦虑指数','抑郁自评',
+  '压力量表','情商','智商','逆商','财商','AQ','EQ','IQ','SQ','FQ','多维度评估',
+  '成长型思维','固定型思维','僵固型思维','防御性悲观','习得性无助','冒充者综合征',
+  '选择困难症','拖延症候群','信息强迫症','完美主义倾向','冒名顶替综合症',
+  '缓解焦虑','缓解压力','缓解疼痛','缓解症状','缓解疲劳','缓解拥堵','缓解矛盾',
+  '缓解紧张','缓解失眠','缓解便秘','缓解咳嗽','缓解发烧','缓解瘙痒','缓解过敏'
+]
+
+const DICT = new Set(DICT_RAW)
+const MAX_WORD_LEN = 8
+
+function segmentText(text) {
+  const tokens = []
+  let i = 0
+  while (i < text.length) {
+    if (!/[\u4e00-\u9fa5]/.test(text[i])) { i++; continue }
+    let matched = false
+    for (let len = Math.min(MAX_WORD_LEN, text.length - i); len >= 2; len--) {
+      const word = text.slice(i, i + len)
+      if (DICT.has(word)) { tokens.push({ word, isDict: true }); i += len; matched = true; break }
+    }
+if (!matched) {
+    // 取连续汉字片段
+    let j = i + 1
+    while (j < text.length && /[\u4e00-\u9fa5]/.test(text[j])) j++
+    const segment = text.slice(i, j)
+    if (segment.length >= 2) {
+      // 未登录词统一按 2 字切分（避免跨词边界的错误组合）
+      for (let k = 0; k < segment.length; k += 2) {
+        if (k + 2 <= segment.length) {
+          tokens.push({ word: segment.slice(k, k + 2), isDict: false })
+        } else {
+          // 奇数长度剩余单字，尝试与前一个词合并为3字
+          const lastIdx = tokens.length - 1
+          if (lastIdx >= 0 && !tokens[lastIdx].isDict && tokens[lastIdx].word.length === 2) {
+            tokens[lastIdx] = { word: tokens[lastIdx].word + segment[k], isDict: false }
+          }
+        }
+      }
+    }
+    i = j
+  }
+  }
+  return tokens
+}
+
+function extractKeywords(text) {
+  if (!text) return []
+
+  const segmented = segmentText(text)
+
+  const engTerms = (text.match(/[a-zA-Z]{2,}(?:[a-zA-Z0-9]*)/g) || [])
+    .map(w => { const c = w.replace(/[^a-zA-Z]$/, ''); return c.length >= 2 ? c : null })
+    .filter(Boolean)
+    .map(w => ({ word: w, isDict: DICT.has(w) || DICT.has(w.toLowerCase()), isEng: true }))
+
+  const numCnTerms = []
+  const ncMatches = text.match(/\d+[一二三四五六七八九十百千万亿]*[\u4e00-\u9fa5]+|[一二三四五六七八九十百千万亿]+\d*[\u4e00-\u9fa5]+/g)
+  if (ncMatches) ncMatches.forEach(m => { if (m.length >= 2 && m.length <= 6 && !STOP_WORDS.has(m)) numCnTerms.push({ word: m, isDict: DICT.has(m), isEng: false }) })
+
+  const allCandidates = [...segmented, ...engTerms, ...numCnTerms]
+  const filtered = allCandidates.filter(c => !STOP_WORDS.has(c.word) && c.word.length >= 2)
+  if (filtered.length === 0) return []
+
+  const tf = {}
+  filtered.forEach(c => {
+    const key = c.word.toLowerCase()
+    if (!tf[key]) tf[key] = { count: 0, len: c.word.length, original: c.word, dictBonus: 0, engBonus: 0 }
+    tf[key].count++
+    if (c.isDict) tf[key].dictBonus += 3
+    if (c.isEng) tf[key].engBonus += 1
+  })
+
+  const ranked = Object.entries(tf)
+    .map(([key, v]) => ({ word: v.original, score: v.count * 3 + v.dictBonus + v.len * 0.5 + v.engBonus, count: v.count, len: v.len }))
+    .sort((a, b) => {
+      if (Math.abs(b.score - a.score) > 0.1) return b.score - a.score
+      if (b.len !== a.len) return b.len - a.len
+      return b.count - a.count
+    })
+    .slice(0, 8)
+    .map(r => r.word)
+
+  return ranked
+}
+
+// ---- 自动关联推荐 ----
+
+function autoLinkRecommend(newCard) {
+  const allCards = loadCards().filter(c => c.id !== newCard.id)
+  if (!allCards.length) return
+  const recs = []
+  allCards.forEach(ec => {
+    let score = 0
+    const common = newCard.keywords.filter(k => ec.keywords.includes(k))
+    score += common.length * 10
+    if (newCard.category === ec.category) score += 3
+    const nw = new Set(newCard.keywords), ew = new Set(ec.keywords)
+    const inter = [...nw].filter(w => ew.has(w))
+    const uni = [...new Set([...newCard.keywords, ...ec.keywords])]
+    score += (uni.length ? inter.length / uni.length : 0) * 5
+    if (score >= 5) recs.push({ targetId: ec.id, score, commonKeywords: common, targetContent: ec.content.slice(0, 50), targetCategory: ec.category })
+  })
+  if (recs.length) {
+    try { localStorage.setItem(`zhinian_rec_${newCard.id}`, JSON.stringify(recs.sort((a,b)=>b.score-a.score))) } catch(e){}
+  }
+}
+
+function getRecommendations(cardId) {
+  try { return JSON.parse(localStorage.getItem(`zhinian_rec_${cardId}`)) || [] } catch(e) { return [] }
+}
+
+// ---- 时间格式化 ----
+
+function getTimeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000)
+  if (m < 1) return '刚刚'
+  if (m < 60) return m + '分钟前'
+  if (h < 24) return h + '小时前'
+  if (d < 7) return d + '天前'
+  if (d < 30) return Math.floor(d/7) + '周前'
+  return dateStr.slice(5, 10)
+}
+
+function formatDate(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+}
+
+function getCategoryName(key) {
+  const c = CATEGORIES.find(x => x.key === key)
+  return c ? c.name : ''
+}
+
+// ---- Toast ----
+
+function showToast(msg) {
+  const el = document.createElement('div')
+  el.className = 'toast'; el.textContent = msg
+  document.body.appendChild(el)
+  setTimeout(() => el.remove(), 2100)
+}
+
+// ========================================
+// UI 渲染
+// ========================================
+
+function setGreeting() {
+  const h = new Date().getHours()
+  let t = '夜深了'
+  if (h>=5&&h<9) t='早安'; else if (h>=9&&h<12) t='上午好'; else if (h>=12&&h<14) t='中午好'
+  else if (h>=14&&h<18) t='下午好'; else if (h>=18&&h<22) t='晚上好'
+  document.getElementById('greetingText').textContent = t
+}
+
+function renderHomeStats() {
+  const cards = loadCards(), links = loadLinks()
+  const today = new Date().toISOString().slice(0,10)
+  const todayCnt = cards.filter(c => c.createdAt && c.createdAt.startsWith(today)).length
+  document.getElementById('totalCards').textContent = cards.length
+  document.getElementById('totalLinks').textContent = links.length
+  document.getElementById('todayCount').textContent = todayCnt
+  document.getElementById('countSpark').textContent = getCardsByCategory('spark').length
+  document.getElementById('countKnowledge').textContent = getCardsByCategory('knowledge').length
+  document.getElementById('countEmotion').textContent = getCardsByCategory('emotion').length
+  document.getElementById('countExperience').textContent = getCardsByCategory('experience').length
+
+  // 最近5条
+  const sorted = [...cards].sort((a,b) => new Date(b.createdAt||b.updatedAt) - new Date(a.createdAt||a.updatedAt)).slice(0,5)
+  const recentEl = document.getElementById('recentList')
+  const titleEl = document.getElementById('recentSectionTitle')
+  const emptyEl = document.getElementById('homeEmpty')
+
+  if (sorted.length > 0) {
+    titleEl.style.display = 'flex'
+    emptyEl.style.display = 'none'
+    recentEl.innerHTML = sorted.map(card => {
+      const cat = CATEGORIES.find(c=>c.key===card.category)||CATEGORIES[0]
+      const linkCnt = links.filter(l=>l.sourceId===card.id||l.targetId===card.id).length
+      const preview = card.content.length > 80 ? card.content.slice(0,80)+'...' : card.content
+      return `<div class="recent-item" onclick="openDetail('${card.id}')">
+        <div class="recent-top"><span class="tag tag-${card.category}">${cat.name}</span><span class="recent-time">${getTimeAgo(card.createdAt)}</span></div>
+        <div class="recent-content">${escapeHtml(preview)}</div>${linkCnt?`<div class="recent-links">🔗 ${linkCnt} 条关联</div>`:''}
+      </div>`
+    }).join('')
+  } else {
+    titleEl.style.display = 'none'
+    emptyEl.style.display = 'block'
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div'); div.textContent = str; return div.innerHTML
+}
+
+// ========================================
+// 页面路由
+// ========================================
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'))
+  if (tab === 'home') {
+    document.getElementById('page-home').classList.add('active')
+    renderHomeStats()
+  } else if (tab === 'graph') {
+    document.getElementById('page-graph').classList.add('active')
+    renderGraph()
+  }
+  document.querySelector(`.tab-item[data-tab="${tab}"]`)?.classList.add('active')
+  window.scrollTo(0, 0)
+}
+
+function switchCategory(category) {
+  currentCategory = category
+  const cat = CATEGORIES.find(c => c.key === category) || CATEGORIES[0]
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'))
+  document.getElementById('page-category').classList.add('active')
+
+  document.getElementById('zoneIcon').textContent = cat.icon
+  document.getElementById('zoneIcon').style.background = cat.color.replace('#','rgba(') ? `rgba(${parseInt(cat.color.slice(1,3),16)},${parseInt(cat.color.slice(3,5),16)},${parseInt(cat.color.slice(5,7),16)},0.12)` : 'rgba(212,133,58,0.14)'
+  // 简化处理：
+  const bgMap = { spark:'rgba(212,133,58,0.14)', knowledge:'rgba(122,156,198,0.13)', emotion:'rgba(201,122,154,0.13)', experience:'rgba(122,168,130,0.13)' }
+  document.getElementById('zoneIcon').parentElement.querySelector('.zone-icon-wrap').style.background = bgMap[category] || bgMap.spark
+  document.getElementById('zoneName').textContent = cat.name
+  document.getElementById('zoneDesc').textContent = cat.desc
+  renderCategoryList(category)
+  window.scrollTo(0, 0)
+}
+
+function renderCategoryList(category) {
+  const cards = getCardsByCategory(category)
+  const links = loadLinks()
+  const cat = CATEGORIES.find(c => c.key === category) || CATEGORIES[0]
+  document.getElementById('zoneCount').textContent = cards.length + ' 条'
+
+  const listEl = document.getElementById('cardList')
+  const emptyEl = document.getElementById('categoryEmpty')
+
+  if (cards.length > 0) {
+    listEl.style.display = 'flex'
+    emptyEl.style.display = 'none'
+    listEl.innerHTML = cards.map((card, i) => {
+      const linkCnt = links.filter(l => l.sourceId === card.id || l.targetId === card.id).length
+      return `<div class="thought-card" style="animation-delay:${i*0.04}s" onclick="openDetail('${card.id}')">
+        <div class="tc-top"><span class="tc-time">${getTimeAgo(card.createdAt)}</span>${linkCnt?`<span class="tc-badge">🔗 ${linkCnt}</span>`:''}</div>
+        <div class="tc-content">${escapeHtml(card.content)}</div>
+        <div class="tc-bottom">${card.tags.length>0 ? card.tags.map(t=>`<span class="tag tag-${category}">#${t}</span>`).join('') : (card.keywords.slice(0,3).map(k=>`<span class="kw-pill">${k}</span>`).join(''))}</div>
+      </div>`
+    }).join('')
+  } else {
+    listEl.style.display = 'none'
+    emptyEl.style.display = 'block'
+    document.getElementById('emptyIcon').textContent = cat.icon
+    document.getElementById('emptyText').textContent = `还没有${cat.name}记录`
+    document.getElementById('emptyHint').innerHTML = `点击下方 <span style="color:var(--primary);cursor:pointer;font-weight:500;" onclick="openNewCardModal('${category}')">✏️ 开始记录</span>`
+  }
+}
+
+function showAllRecent() {
+  // 显示所有记录混合列表（按分类切换显示）
+  switchCategory(currentCategory || 'spark')
+}
+
+// ========================================
+// 新建记录弹窗
+// ========================================
+
+let selectedCatForNew = 'spark'
+let selectedTagsForNew = []
+let editedKeywords = [] // 用户编辑后的关键词（新建记录弹窗共用）
+
+function openNewCardModal(preselectedCat) {
+  selectedCatForNew = preselectedCat || 'spark'
+  selectedTagsForNew = []
+  renderCatSelector()
+document.getElementById('newContent').value = ''
+document.getElementById('charNum').textContent = '0'
+document.getElementById('kwPreview').style.display = 'none'
+document.getElementById('quickTagsArea').style.display = 'none'
+document.getElementById('selTags').innerHTML = ''
+document.getElementById('linkRecPanel').style.display = 'none'
+editedKeywords = []
+document.getElementById('saveBtn').disabled = true
+updatePlaceholder()
+  document.getElementById('newCardModal').classList.add('show')
+  setTimeout(() => document.getElementById('newContent').focus(), 300)
+}
+
+function closeNewCardModal() {
+  document.getElementById('newCardModal').classList.remove('show')
+}
+
+function renderCatSelector() {
+  const el = document.getElementById('catSelector')
+  el.innerHTML = CATEGORIES.map(c =>
+    `<button class="cat-opt ${c.key===selectedCatForNew?'selected':''}" style="--cat-color:${c.color}" data-key="${c.key}" onclick="selectCatForNew('${c.key}')">${c.icon} ${c.name}</button>`
+  ).join('')
+}
+
+function selectCatForNew(key) {
+  selectedCatForNew = key
+  selectedTagsForNew = []
+  renderCatSelector()
+  updatePlaceholder()
+  renderQuickTags()
+  document.getElementById('selTags').innerHTML = ''
+}
+
+function updatePlaceholder() {
+  const cat = CATEGORIES.find(c => c.key === selectedCatForNew) || CATEGORIES[0]
+  document.getElementById('newContent').placeholder = cat.placeholder
+  document.getElementById('saveBtn').textContent = `💾 存入${cat.name}`
+}
+
+function onContentInput() {
+  const val = document.getElementById('newContent').value
+  const len = val.length
+  document.getElementById('charNum').textContent = len
+  document.getElementById('charCount').className = 'char-count' + (len > 1800 ? ' warn' : '')
+  document.getElementById('saveBtn').disabled = !val.trim()
+
+  // 关键词预览（支持用户编辑）
+  const kws = extractKeywords(val)
+  editedKeywords = [...kws] // 初始化为自动提取的结果（每次输入重新提取，覆盖用户之前的编辑）
+const kwEl = document.getElementById('kwPreview')
+if (editedKeywords.length > 0) {
+kwEl.style.display = 'block'
+renderEditableKwTags()
+} else {
+kwEl.style.display = 'none'
+}
+}
+
+function renderEditableKwTags() {
+document.getElementById('kwTags').innerHTML = editedKeywords.map((k, i) =>
+`<span class="kw-tag" onclick="removeKeyword(${i})">${escapeHtml(k)}<span class="kw-remove">✕</span></span>`
+).join('')
+}
+
+function removeKeyword(index) {
+editedKeywords.splice(index, 1)
+if (editedKeywords.length === 0) {
+document.getElementById('kwPreview').style.display = 'none'
+} else {
+renderEditableKwTags()
+}
+}
+
+function addCustomKeyword() {
+const input = document.getElementById('kwAddInput')
+const val = input.value.trim()
+if (!val || val.length < 1) return
+if (val.length > 10) { alert('关键词不宜超过10个字'); return }
+if (editedKeywords.includes(val)) { input.value = ''; return }
+editedKeywords.push(val)
+input.value = ''
+document.getElementById('kwPreview').style.display = 'block'
+renderEditableKwTags()
+input.focus()
+}
+
+function renderQuickTags() {
+  const cat = CATEGORIES.find(c => c.key === selectedCatForNew)
+  if (!cat || !cat.quickTags.length) { document.getElementById('quickTagsArea').style.display='none'; return }
+  document.getElementById('quickTagsArea').style.display = 'block'
+  document.getElementById('qtRow').innerHTML = cat.quickTags.map(t =>
+    `<button class="qt-chip ${selectedTagsForNew.includes(t)?'selected':''}" onclick="toggleQuickTag('${t}')">${t}</button>`
+  ).join('')
+}
+
+function toggleQuickTag(tag) {
+  let tags = [...selectedTagsForNew]
+  const idx = tags.indexOf(tag)
+  if (idx !== -1) tags.splice(idx, 1); else tags.push(tag)
+  selectedTagsForNew = tags
+  renderQuickTags()
+  renderSelTags()
+}
+
+function renderSelTags() {
+  const el = document.getElementById('selTags')
+  if (!selectedTagsForNew.length) { el.innerHTML = ''; return }
+  el.innerHTML = selectedTagsForNew.map(t => `<span class="sel-tag" onclick="removeSelTag('${t}')">${t} ✕</span>`).join('')
+}
+
+function removeSelTag(tag) {
+  selectedTagsForNew = selectedTagsForNew.filter(t => t !== tag)
+  renderQuickTags(); renderSelTags()
+}
+
+function saveNewCard() {
+const content = document.getElementById('newContent').value.trim()
+if (!content) return
+// 使用用户编辑后的关键词（如果用户修改过），否则用自动提取的
+const finalKeywords = editedKeywords.length > 0 ? [...editedKeywords] : extractKeywords(content)
+const card = addCard({ content, category: selectedCatForNew, tags: [...selectedTagsForNew], keywords: finalKeywords })
+showToast('已保存 ✨')
+
+  // 检查推荐
+  const recs = getRecommendations(card.id)
+  if (recs && recs.length > 0) {
+    showLinkRecPanel(card.id, recs.slice(0, 5))
+// 重置表单
+document.getElementById('newContent').value = ''
+document.getElementById('charNum').textContent = '0'
+document.getElementById('kwPreview').style.display = 'none'
+document.getElementById('selTags').innerHTML = ''
+selectedTagsForNew = []
+editedKeywords = []
+document.getElementById('saveBtn').disabled = true
+} else {
+    closeNewCardModal()
+    renderHomeStats()
+  }
+}
+
+function showLinkRecPanel(cardId, recs) {
+  const panel = document.getElementById('linkRecPanel')
+  const list = document.getElementById('lrpList')
+  panel.dataset.cardId = cardId
+  panel.style.display = 'block'
+  list.innerHTML = recs.map(r => {
+    const catName = getCategoryName(r.targetCategory)
+    return `<div class="lrp-item" onclick="quickConnect('${cardId}','${r.targetId}',this)">
+      <div class="lrp-score"><div class="lrp-score-num">${r.score}</div><div class="lrp-score-lbl">分</div></div>
+      <div class="lrp-info"><div class="lrp-preview">${escapeHtml(r.targetContent)}...</div><div class="lrp-kws">${r.commonKeywords.map(k=>`<span class="lrp-kw">#${k}</span>`).join('')}</div></div>
+      <div class="lrp-action">关联</div>
+    </div>`
+  }).join('')
+}
+
+function quickConnect(sourceId, targetId, el) {
+  addLink(sourceId, targetId)
+  showToast('关联成功 🔗')
+  el.style.opacity = '0.3'; el.style.pointerEvents = 'none'
+  // 检查是否还有未关联的
+  const remaining = document.querySelectorAll('.lrp-item:not([style*="opacity"])')
+  if (remaining.length === 0) {
+    setTimeout(() => { document.getElementById('linkRecPanel').style.display = 'none'; closeNewCardModal(); renderHomeStats() }, 600)
+  }
+}
+
+function skipLinkRec() {
+  document.getElementById('linkRecPanel').style.display = 'none'
+  closeNewCardModal()
+  renderHomeStats()
+}
+
+// ========================================
+// 详情页
+// ========================================
+
+function openDetail(id) {
+  currentCardId = id
+  const card = loadCards().find(c => c.id === id)
+  if (!card) { showToast('记录不存在'); return }
+  renderDetailPage(card)
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.getElementById('page-detail').classList.add('active')
+  window.scrollTo(0, 0)
+}
+
+function renderDetailPage(card) {
+  const cat = CATEGORIES.find(c => c.key === card.category) || CATEGORIES[0]
+  const linkedCards = getLinkedCards(card.id).map(c => ({
+    ...c, categoryName: getCategoryName(c.category),
+    timeAgo: getTimeAgo(c.createdAt),
+    color: (CATEGORIES.find(x=>x.key===c.category)||CATEGORIES[0]).color,
+    contentPreview: c.content.length > 60 ? c.content.slice(0,60)+'...' : c.content
+  }))
+  const links = loadLinks()
+  linkedCards.forEach(lc => {
+    const link = links.find(l => (l.sourceId===card.id&&l.targetId===lc.id)||(l.targetId===card.id&&l.sourceId===lc.id))
+    lc.linkId = link ? link.id : ''
+  })
+
+  let recs = getRecommendations(card.id)
+  const linkedIds = new Set(linkedCards.map(lc => lc.id))
+  recs = recs.filter(r => !linkedIds.has(r.targetId))
+
+  const page = document.getElementById('page-detail')
+  page.innerHTML = `
+    <div class="detail-back-bar"><button class="back-btn" onclick="goBackFromDetail()" title="返回">←</button><span class="detail-back-title">返回 ${cat.name} 列表</span></div>
+    <div class="detail-card">
+      <div class="dc-header"><span class="tag tag-${card.category}">${cat.name}</span><span class="dc-time">${formatDate(card.createdAt)}</span></div>
+      <div class="dc-content">${escapeHtml(card.content)}</div>
+      ${card.updatedAt!==card.createdAt?`<div class="dc-meta">📝 更新于 ${formatDate(card.updatedAt)}</div>`:''}
+    </div>
+
+    ${card.keywords.length?`<div class="section-block"><span class="sb-label">🔑 关键词</span><div style="display:flex;flex-wrap:wrap;gap:6px;">${card.keywords.map(k=>`<span class="kw-pill">${k}</span>`).join('')}</div></div>`:''}
+
+    ${card.tags.length?`<div class="section-block"><span class="sb-label">🏷️ 标签</span><div style="display:flex;flex-wrap:wrap:gap:6px;">${card.tags.map(t=>`<span class="tag tag-${card.category}">#${t}</span>`).join('')}</div></div>`:''}
+
+    <div class="section-block">
+      <div class="sb-header"><span class="sb-label">🔗 关联</span><span class="link-cnt">${linkedCards.length} 条关联</span></div>
+      ${linkedCards.length>0?`<div class="linked-list">${linkedCards.map(lc=>`<div class="linked-item" onclick="openDetail('${lc.id}')"><div class="li-dot" style="background:${lc.color}"></div><div class="li-info"><span class="tag tag-${lc.category}" style="margin-bottom:6px;">${lc.categoryName}</span><span class="li-content">${escapeHtml(lc.contentPreview)}</span><span class="li-time">${lc.timeAgo}</span></div><span class="li-unlink" onclick="event.stopPropagation();unlinkCard('${lc.linkId}','${lc.id}')">✕</span></div>`).join('')}</div>`:`<div class="no-links-hint">暂无关联，可以与其他记录建立连接</div>`}
+      <div class="add-link-btn" onclick="openLinkPicker('${card.id}')">+ 建立新关联</div>
+    </div>
+
+    ${recs.length>0?`<div class="section-block"><span class="sb-label">💡 推荐关联</span><div class="rec-list">${recs.map(r=>`<div class="rec-item"><div class="rec-left"><span class="tag tag-${r.targetCategory}" style="margin-bottom:6px;display:inline-block;">${getCategoryName(r.targetCategory)}</span><span class="rec-preview">${escapeHtml(r.targetContent)}${r.targetContent.length>=50?'...':''}</span><div class="rec-common">${r.commonKeywords.map(k=>`<span>#${k}</span>`).join('')}</div></div><div class="rec-right"><span class="rec-score-badge">${r.score}分</span><span class="rec-connect" onclick="connectRecommend('${card.id}','${r.targetId}')">关联</span></div></div>`).join('')}</div></div>`:''}
+
+    <div class="bottom-actions">
+      <button class="ba-btn" onclick="startEdit('${card.id}')">✏️ 编辑</button>
+      <button class="ba-btn danger" onclick="confirmDeleteCard('${card.id}')">🗑️ 删除</button>
+    </div>
+  `
+}
+
+// ---- 编辑模式 ----
+let editingCardId = null
+let editingKeywords = [] // 编辑中的关键词
+
+function startEdit(id) {
+  const card = loadCards().find(c => c.id === id)
+  if (!card) return
+  editingCardId = id
+  editingKeywords = [...(card.keywords || [])] // 加载现有关键词
+  const page = document.getElementById('page-detail')
+  const dc = page.querySelector('.dc-content')
+  if (dc) {
+    dc.outerHTML = `<textarea class="textarea-input edit-area" id="editArea" style="min-height:250px;margin-top:12px;" oninput="onEditContentInput()">${escapeHtml(card.content)}</textarea>
+      <div class="kw-preview" id="editKwPreview" style="display:block;margin-top:14px;">
+        <span class="kw-preview-label">🔑 关键词 <small style="font-weight:400;opacity:0.6;">（点击 × 移除）</small></span>
+        <div class="kw-preview-tags" id="editKwTags"></div>
+        <div class="kw-add-row">
+          <input class="kw-add-input" id="editKwAddInput" placeholder="添加自定义关键词..." onkeydown="if(event.key==='Enter'){event.preventDefault();addEditKeyword()}">
+          <button class="kw-add-btn" onclick="addEditKeyword()">+ 添加</button>
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top:14px;">
+        <button class="btn btn-ghost" onclick="cancelEdit()">取消</button>
+        <button class="btn btn-primary" onclick="saveEdit()">保存修改</button>
+      </div>`
+    renderEditKwTags()
+  }
+}
+
+function cancelEdit() { if (currentCardId) openDetail(currentCardId) }
+
+// 从卡片详情返回分类列表
+function goBackFromDetail() {
+  if (currentCategory) {
+    switchCategory(currentCategory)
+  } else {
+    switchTab('home')
+  }
+}
+
+// 编辑模式 - 渲染可编辑关键词标签
+function renderEditKwTags() {
+  const el = document.getElementById('editKwTags')
+  if (!el) return
+  if (editingKeywords.length === 0) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">暂无关键词，输入内容后自动提取或手动添加</span>'
+    return
+  }
+  el.innerHTML = editingKeywords.map((k, i) =>
+    `<span class="kw-tag" onclick="removeEditKeyword(${i})">${escapeHtml(k)}<span class="kw-remove">✕</span></span>`
+  ).join('')
+}
+
+// 编辑模式 - 移除关键词
+function removeEditKeyword(index) {
+  editingKeywords.splice(index, 1)
+  renderEditKwTags()
+}
+
+// 编辑模式 - 添加关键词
+function addEditKeyword() {
+  const input = document.getElementById('editKwAddInput')
+  const val = input.value.trim()
+  if (!val || val.length < 1) return
+  if (val.length > 10) { alert('关键词不宜超过10个字'); return }
+  if (editingKeywords.includes(val)) { input.value = ''; return }
+  editingKeywords.push(val)
+  input.value = ''
+  renderEditKwTags()
+  input.focus()
+}
+
+// 编辑模式 - 内容变化时重新提取关键词（合并用户已编辑的）
+function onEditContentInput() {
+  const val = document.getElementById('editArea').value.trim()
+  if (!val) return
+  // 自动提取的新关键词与用户已有的去重合并
+  const autoKws = extractKeywords(val)
+  const existingSet = new Set(editingKeywords)
+  autoKws.forEach(k => { if (!existingSet.has(k)) { editingKeywords.push(k); existingSet.add(k) } })
+  renderEditKwTags()
+}
+
+function saveEdit() {
+  const content = document.getElementById('editArea').value.trim()
+  if (!content) { showToast('内容不能为空'); return }
+  // 使用用户编辑后的关键词，如果用户没手动改过则用当前 editingKeywords（含自动提取的）
+  updateCard(editingCardId, { content, keywords: editingKeywords })
+  showToast('已更新 ✨')
+  openDetail(editingCardId)
+}
+
+function confirmDeleteCard(id) {
+  if (confirm('确定删除这条记录吗？\n删除后不可恢复，相关的关联也会被移除。')) {
+    deleteCard(id); showToast('已删除'); switchTab('home')
+  }
+}
+
+// ---- 关联选择器 ----
+let pickerCurrentCardId = null
+
+function openLinkPicker(cardId) {
+  pickerCurrentCardId = cardId
+  const cards = loadCards().filter(c => c.id !== cardId)
+  const linkedIds = new Set(getLinkedIds(cardId))
+  renderPickerList(cards.filter(c => !linkedIds.has(c.id)))
+  document.getElementById('pickerSearch').value = ''
+  document.getElementById('linkPickerOverlay').classList.add('show')
+}
+function closeLinkPicker() { document.getElementById('linkPickerOverlay').classList.remove('show') }
+
+function renderPickerList(cards) {
+  const el = document.getElementById('pickerList')
+  if (!cards.length) { el.innerHTML = '<div class="pm-empty">没有可关联的记录</div>'; return }
+  el.innerHTML = cards.map(c => `<div class="pm-item" onclick="createLinkFromPicker('${c.id}')">
+    <span class="tag tag-${c.category}">${getCategoryName(c.category)}</span>
+    <span class="pm-item-content">${escapeHtml(c.content.length>50?c.content.slice(0,50)+'...':c.content)}</span>
+    <span class="pm-item-time">${getTimeAgo(c.createdAt)}</span>
+  </div>`).join('')
+}
+function onPickerSearch() {
+  const q = document.getElementById('pickerSearch').value.toLowerCase()
+  if (!q) { renderPickerList(loadCards().filter(c=>c.id!==pickerCurrentCardId)); return }
+  renderPickerList(loadCards().filter(c =>
+    c.id!==pickerCurrentCardId && (c.content.toLowerCase().includes(q)||c.keywords.some(k=>k.includes(q))||c.tags.some(t=>t.includes(q)))
+  ))
+}
+function createLinkFromPicker(targetId) {
+  addLink(pickerCurrentCardId, targetId); showToast('关联成功 🔗'); closeLinkPicker()
+  if (currentCardId) openDetail(currentCardId)
+}
+function unlinkCard(linkId, targetCardId) {
+  if (confirm('取消这条关联？')) { removeLink(linkId); showToast('已取消关联'); if (currentCardId) openDetail(currentCardId) }
+}
+function connectRecommend(sourceId, targetId) { addLink(sourceId, targetId); showToast('关联成功 🔗'); if (currentCardId) openDetail(currentCardId) }
+
+// ========================================
+// 关联图谱（Canvas 力导向图）
+// ========================================
+
+let graphNodes = [], graphEdges = []
+let canvas, ctx, canvasW, canvasH, dpr
+let draggingNode = null, dragOffX = 0, dragOffY = 0
+let selectedGraphNode = null
+
+const CAT_COLOR_MAP = {}
+CATEGORIES.forEach(c => CAT_COLOR_MAP[c.key] = { name: c.name, color: c.color })
+
+function renderGraph() {
+  const cards = loadCards(), links = loadLinks()
+  document.getElementById('graphNodeCount').textContent = cards.length
+  document.getElementById('graphEdgeCount').textContent = links.length
+
+  let filteredCards = graphFilter === 'all' ? cards : cards.filter(c => c.category === graphFilter)
+  const fIds = new Set(filteredCards.map(c => c.id))
+  let filteredLinks = links.filter(l => fIds.has(l.sourceId) && fIds.has(l.targetId))
+
+  const container = document.getElementById('canvasContainer')
+  const emptyEl = document.getElementById('graphEmpty'), legendEl = document.getElementById('graphLegend'), tipEl = document.getElementById('graphTip')
+
+  if (filteredCards.length === 0) {
+    container.style.display = 'none'; legendEl.style.display = 'none'; tipEl.style.display = 'none'; emptyEl.style.display = 'block'; return
+  }
+  container.style.display = 'block'; emptyEl.style.display = 'none'; legendEl.style.display = 'flex'; tipEl.style.display = 'block'
+
+  // 筛选chips
+  document.getElementById('filterChips').innerHTML =
+    `<button class="filter-chip ${graphFilter==='all'?'active':''}" onclick="setGraphFilter('all')" style="--chip-color:var(--primary)">全部</button>` +
+    CATEGORIES.map(c => `<button class="filter-chip ${graphFilter===c.key?'active':''}" onclick="setGraphFilter('${c.key}')" style="--chip-color:${c.color}">${c.icon} ${c.name}</button>`).join('')
+
+  // 图例
+  legendEl.innerHTML = CATEGORIES.map(c => `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-text">${c.name}</span></div>`).join('')
+
+  // 构建图数据
+graphNodes = filteredCards.map(card => {
+const cfg = CAT_COLOR_MAP[card.category] || CAT_COLOR_MAP.spark
+return {
+id: card.id, content: card.content, category: card.category,
+categoryName: cfg.name, color: cfg.color,
+keywords: card.keywords || [],
+timeAgo: getTimeAgo(card.createdAt),
+linkCount: links.filter(l => l.sourceId===card.id || l.targetId===card.id).length,
+x: 0, y: 0, vx: 0, vy: 0,
+radius: Math.max(14, Math.min(30, 12 + card.content.length / 12))
+}
+})
+  graphEdges = filteredLinks.map(l => ({ sourceId: l.sourceId, targetId: l.targetId }))
+
+  initCanvasAndDraw()
+}
+
+function setGraphFilter(f) { graphFilter = f; closeNodePopup(); renderGraph() }
+
+function initCanvasAndDraw() {
+  canvas = document.getElementById('graphCanvas')
+  const container = document.getElementById('canvasContainer')
+  canvasW = container.clientWidth; canvasH = container.clientHeight
+  dpr = window.devicePixelRatio || 1
+  canvas.width = canvasW * dpr; canvas.height = canvasH * dpr
+  ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr)
+
+  // 环形布局
+  const cx = canvasW / 2, cy = canvasH / 2, r = Math.min(cx, cy) * 0.6
+  graphNodes.forEach((n, i) => { const a = (2*Math.PI*i)/graphNodes.length - Math.PI/2; n.x = cx + r*Math.cos(a); n.y = cy + r*Math.sin(a) })
+
+  simulateForce(); drawGraphCanvas()
+}
+
+function simulateForce() {
+  const cx = canvasW/2, cy = canvasH/2
+  for (let iter=0; iter<60; iter++) {
+    for (let i=0; i<graphNodes.length; i++)
+      for (let j=i+1; j<graphNodes.length; j++) {
+        const dx=graphNodes[j].x-graphNodes[i].x, dy=graphNodes[j].y-graphNodes[i].y, dist=Math.sqrt(dx*dx+dy*dy)||1
+        const f=2000/(dist*dist), fx=(dx/dist)*f, fy=(dy/dist)*f
+        graphNodes[i].vx-=fx; graphNodes[i].vy-=fy; graphNodes[j].vx+=fx; graphNodes[j].vy+=fy
+      }
+    graphEdges.forEach(e => {
+      const s=graphNodes.find(n=>n.id===e.sourceId), t=graphNodes.find(n=>n.id===e.targetId)
+      if(!s||!t)return
+      const dx=t.x-s.x, dy=t.y-s.y, dist=Math.sqrt(dx*dx+dy*dy)||1, f=(dist-100)*0.03
+      s.vx+=(dx/dist)*f; s.vy+=(dy/dist)*f; t.vx-=(dx/dist)*f; t.vy-=(dy/dist)*f
+    })
+    graphNodes.forEach(n => {
+      n.vx+=(cx-n.x)*0.005; n.vy+=(cy-n.y)*0.005; n.vx*=0.85; n.vy*=0.85; n.x+=n.vx; n.y+=n.vy
+      const m=30; n.x=Math.max(m,Math.min(canvasW-m,n.x)); n.y=Math.max(m,Math.min(canvasH-m,n.y))
+    })
+  }
+}
+
+function drawGraphCanvas() {
+  if (!ctx) return
+  ctx.clearRect(0, 0, canvasW, canvasH)
+  // 连线
+  ctx.strokeStyle='rgba(139,139,163,0.18)'; ctx.lineWidth=1.5
+  graphEdges.forEach(e => {
+    const s=graphNodes.find(n=>n.id===e.sourceId), t=graphNodes.find(n=>n.id===e.targetId)
+    if(!s||!t)return; ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y); ctx.stroke()
+  })
+// 节点
+graphNodes.forEach(n => {
+const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.radius*2.2)
+g.addColorStop(0, n.color+'40'); g.addColorStop(1,'transparent')
+ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,n.radius*2.2,0,Math.PI*2); ctx.fill()
+ctx.fillStyle=n.color; ctx.globalAlpha=0.95
+ctx.beginPath(); ctx.arc(n.x,n.y,n.radius,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1
+// 节点标签：优先显示第一个关键词，其次显示内容前2-3字
+const label = (n.keywords && n.keywords.length > 0) ? n.keywords[0] : (n.content.length >= 2 ? n.content.slice(0, 2) : n.content.charAt(0)||'·')
+ctx.textAlign='center'; ctx.textBaseline='middle'
+// 根据标签长度动态调整字号（提高最小字号）
+const fontSize = Math.max(11, Math.min(n.radius*0.55, 150 / Math.max(label.length, 1)))
+ctx.font=`600 ${fontSize}px -apple-system, "PingFang SC", "SF Pro Text", sans-serif`
+// 文字描边 + 阴影，确保在任何背景色上都清晰可读
+ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.lineWidth=3; ctx.lineJoin='round'
+ctx.strokeText(label, n.x, n.y)
+ctx.fillStyle='#fff'; ctx.fillText(label, n.x, n.y)
+})
+}
+
+// Canvas 交互
+document.addEventListener('DOMContentLoaded', () => {
+  const cvs = document.getElementById('graphCanvas')
+  if (!cvs) return
+
+  function getPos(e) {
+    const rect = cvs.getBoundingClientRect()
+    const t = e.touches ? e.touches[0] : e
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top }
+  }
+
+  function findNode(x,y) {
+    for (const n of graphNodes) if ((x-n.x)**2+(y-n.y)**2<(n.radius+12)**2) return n
+    return null
+  }
+
+  cvs.addEventListener('mousedown', e => { const p=getPos(e); const n=findNode(p.x,p.y); if(n){draggingNode=n;dragOffX=p.x-n.x;dragOffY=p.y-n.y}else closeNodePopup() })
+  cvs.addEventListener('mousemove', e => { if(!draggingNode)return; const p=getPos(e); draggingNode.x=p.x-dragOffX; draggingNode.y=p.y-dragOffY; const m=30; draggingNode.x=Math.max(m,Math.min(canvasW-m,draggingNode.x)); draggingNode.y=Math.max(m,Math.min(canvasH-m,draggingNode.y)); drawGraphCanvas() })
+  cvs.addEventListener('mouseup', () => { if(draggingNode){selectedGraphNode=draggingNode;showNodePopup(draggingNode);draggingNode=null} })
+
+  cvs.addEventListener('touchstart', e => { e.preventDefault(); const p=getPos(e); const n=findNode(p.x,p.y); if(n){draggingNode=n;dragOffX=p.x-n.x;dragOffY=p.y-n.y}else closeNodePopup() }, {passive:false})
+  cvs.addEventListener('touchmove', e => { e.preventDefault(); if(!draggingNode)return; const p=getPos(e); draggingNode.x=p.x-dragOffX; draggingNode.y=p.y-dragOffY; const m=30; draggingNode.x=Math.max(m,Math.min(canvasW-m,draggingNode.x)); draggingNode.y=Math.max(m,Math.min(canvasH-m,draggingNode.y)); drawGraphCanvas() }, {passive:false})
+  cvs.addEventListener('touchend', () => { if(draggingNode){selectedGraphNode=draggingNode;showNodePopup(draggingNode);draggingNode=null} })
+})
+
+function showNodePopup(node) {
+  selectedGraphNode = node
+  document.getElementById('npTag').innerHTML = `<span class="tag tag-${node.category}">${node.categoryName}</span>`
+  document.getElementById('npContent').textContent = node.content
+  document.getElementById('npMeta').textContent = `${node.timeAgo} · ${node.linkCount} 条关联`
+  document.getElementById('nodePopup').classList.add('show')
+}
+function closeNodePopup() { document.getElementById('nodePopup').classList.remove('show'); selectedGraphNode = null }
+function goDetailFromGraph() { if(selectedGraphNode){closeNodePopup();openDetail(selectedGraphNode.id)} }
+
+// ========================================
+// 初始化
+// ========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 一次性迁移：用新算法重新提取所有已有卡片的关键词
+  migrateKeywords()
+  setGreeting(); renderHomeStats()
+})
+
+/**
+ * 一次性关键词迁移
+ * 检测所有已有卡片，用新的分词算法重新提取关键词后保存
+ * 通过 localStorage 标记位确保只执行一次
+ */
+function migrateKeywords() {
+  const MIGRATION_KEY = 'zhinian_kw_migrated_v5'
+  if (localStorage.getItem(MIGRATION_KEY)) return // 已迁移过，跳过
+
+  const cards = loadCards()
+  if (!cards.length) {
+    localStorage.setItem(MIGRATION_KEY, '1')
+    return
+  }
+
+  let updated = 0
+  cards.forEach(card => {
+    if (card.content) {
+      const newKw = extractKeywords(card.content)
+      // 只有当新关键词确实不同时才更新（避免不必要的写入）
+      const oldStr = (card.keywords || []).sort().join(',')
+      const newStr = newKw.sort().join(',')
+      if (oldStr !== newStr) {
+        card.keywords = newKw
+        updated++
+      }
+    }
+  })
+
+if (updated > 0) {
+saveCards(cards)
+console.log(`[织念] 关键词迁移完成：${updated}/${cards.length} 条卡片已更新`)
+// 关键词更新后，重新计算所有卡片间的自动关联
+rebuildAllLinks(cards)
+}
+localStorage.setItem(MIGRATION_KEY, '1')
+}
+
+/**
+ * 重建所有卡片的自动关联（基于新关键词）
+ * 在关键词迁移后调用，确保关联推荐基于最新的关键词数据
+ */
+function rebuildAllLinks(cards) {
+const links = loadLinks()
+let newLinks = 0
+cards.forEach(card => {
+// 对每张卡片，与其他所有卡片重新计算关联分数
+const others = cards.filter(c => c.id !== card.id)
+const recs = []
+others.forEach(oc => {
+let score = 0
+const common = (card.keywords || []).filter(k => (oc.keywords || []).includes(k))
+score += common.length * 10
+if (card.category === oc.category) score += 3
+if (score >= 5) recs.push({ targetId: oc.id, score, commonKeywords: common })
+})
+// 将满足条件的推荐转化为实际关联
+recs.forEach(rec => {
+const exists = links.some(l =>
+(l.sourceId === card.id && l.targetId === rec.targetId) ||
+(l.sourceId === rec.targetId && l.targetId === card.id)
+)
+if (!exists) {
+links.push({ sourceId: card.id, targetId: rec.targetId, type: 'auto', keywords: rec.commonKeywords })
+newLinks++
+}
+})
+})
+if (newLinks > 0) {
+saveLinks(links)
+console.log(`[织念] 关联重建完成：新增 ${newLinks} 条自动关联`)
+}
+}
+
+// 窗口resize时重绘图谱
+window.addEventListener('resize', () => {
+  if (document.getElementById('page-graph').classList.contains('active')) renderGraph()
+})
+</script>
+</body>
+</html>

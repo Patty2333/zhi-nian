@@ -1,0 +1,2 @@
+@import '../../pages/spark/spark.wxss';
+.fab-knowledge { background: linear-gradient(135deg, #4a90d9, #6c5ce7); box-shadow: 0 8rpx 32rpx rgba(74, 144, 217, 0.4); }

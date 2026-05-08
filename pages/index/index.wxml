@@ -1,0 +1,145 @@
+<!-- 织念 - 首页 / 思维宫殿入口 -->
+<view class="container">
+  <!-- 顶部问候 -->
+  <view class="header fade-in-up">
+    <view class="header-top">
+      <view>
+        <view class="greeting">{{greetingText}}</view>
+        <view class="subtitle">编织零散的念头，找回长期思考的能力</view>
+      </view>
+      <view class="avatar-wrap" bindtap="goToGraph">
+        <text class="avatar-icon">🕸️</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 统计概览 -->
+  <view class="stats-row fade-in-up" style="animation-delay: 0.1s">
+    <view class="stat-item">
+      <text class="stat-num text-gradient">{{totalCards}}</text>
+      <text class="stat-label">条记录</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num text-gradient">{{totalLinks}}</text>
+      <text class="stat-label">条关联</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-num text-gradient">{{todayCount}}</text>
+      <text class="stat-label">今日新增</text>
+    </view>
+  </view>
+
+  <!-- 四大分区入口 -->
+  <view class="section-title fade-in-up" style="animation-delay: 0.2s">
+    <text>思维宫殿</text>
+    <text class="section-sub">选择一个区域，开始记录</text>
+  </view>
+
+  <view class="category-grid">
+    <view
+      class="category-card card-glow-spark fade-in-up"
+      style="animation-delay: 0.25s"
+      data-category="spark"
+      bindtap="goToCategory"
+    >
+      <view class="cat-icon-wrap spark-bg">
+        <text class="cat-icon">⚡</text>
+      </view>
+      <view class="cat-info">
+        <text class="cat-name">灵光一现</text>
+        <text class="cat-desc">突发奇想 · 碎片灵感</text>
+      </view>
+      <view class="cat-count">
+        <text class="count-num">{{categoryCounts.spark}}</text>
+      </view>
+    </view>
+
+    <view
+      class="category-card card-glow-knowledge fade-in-up"
+      style="animation-delay: 0.3s"
+      data-category="knowledge"
+      bindtap="goToCategory"
+    >
+      <view class="cat-icon-wrap knowledge-bg">
+        <text class="cat-icon">📚</text>
+      </view>
+      <view class="cat-info">
+        <text class="cat-name">知识入脑</text>
+        <text class="cat-desc">学习笔记 · 干货整理</text>
+      </view>
+      <view class="cat-count">
+        <text class="count-num">{{categoryCounts.knowledge}}</text>
+      </view>
+    </view>
+
+    <view
+      class="category-card card-glow-emotion fade-in-up"
+      style="animation-delay: 0.35s"
+      data-category="emotion"
+      bindtap="goToCategory"
+    >
+      <view class="cat-icon-wrap emotion-bg">
+        <text class="cat-icon">🌊</text>
+      </view>
+      <view class="cat-info">
+        <text class="cat-name">情绪流淌</text>
+        <text class="cat-desc">心情记录 · 自我对话</text>
+      </view>
+      <view class="cat-count">
+        <text class="count-num">{{categoryCounts.emotion}}</text>
+      </view>
+    </view>
+
+    <view
+      class="category-card card-glow-experience fade-in-up"
+      style="animation-delay: 0.4s"
+      data-category="experience"
+      bindtap="goToCategory"
+    >
+      <view class="cat-icon-wrap experience-bg">
+        <text class="cat-icon">✨</text>
+      </view>
+      <view class="cat-info">
+        <text class="cat-name">新鲜体验</text>
+        <text class="cat-desc">新活动 · 新认识的人</text>
+      </view>
+      <view class="cat-count">
+        <text class="count-num">{{categoryCounts.experience}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近记录预览 -->
+  <view class="section-title fade-in-up" style="animation-delay: 0.45s" wx:if="{{recentCards.length > 0}}">
+    <text>最近记录</text>
+    <text class="see-all" data-type="all" bindtap="goToCategory">查看全部 ›</text>
+  </view>
+
+  <view class="recent-list" wx:if="{{recentCards.length > 0}}">
+    <view
+      class="recent-item card fade-in-up"
+      style="animation-delay: 0.5s"
+      wx:for="{{recentCards}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindtap="goToDetail"
+    >
+      <view class="recent-header">
+        <view class="tag tag-{{item.category}}">{{item.categoryName}}</view>
+        <text class="recent-time">{{item.timeAgo}}</text>
+      </view>
+      <text class="recent-content">{{item.content}}</text>
+      <view class="recent-links" wx:if="{{item.linkCount > 0}}">
+        <text class="link-hint">🔗 {{item.linkCount}} 条关联</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷入口提示 -->
+  <view class="quick-tip fade-in-up" style="animation-delay: 0.55s" wx:if="{{totalCards === 0}}">
+    <view class="tip-icon">💡</view>
+    <text class="tip-text">点击下方「记录」标签，开始你的第一条思绪</text>
+  </view>
+</view>

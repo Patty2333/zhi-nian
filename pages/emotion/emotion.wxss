@@ -1,0 +1,2 @@
+@import '../../pages/spark/spark.wxss';
+.fab-emotion { background: linear-gradient(135deg, #e056fd, #be2edd); box-shadow: 0 8rpx 32rpx rgba(224, 86, 253, 0.4); }

@@ -1,0 +1,87 @@
+<!-- 织念 - 关联图谱 -->
+<view class="container">
+  <!-- 头部统计 -->
+  <view class="graph-header">
+    <view class="gh-left">
+      <text class="gh-title">🕸️ 关联图谱</text>
+      <text class="gh-sub">可视化你的思维网络</text>
+    </view>
+    <view class="gh-stats">
+      <view class="gh-stat">
+        <text class="gh-num">{{nodeCount}}</text>
+        <text class="gh-label">节点</text>
+      </view>
+      <view class="gh-stat">
+        <text class="gh-num">{{edgeCount}}</text>
+        <text class="gh-label">连线</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <scroll-view scroll-x class="filter-scroll" enhanced show-scrollbar="{{false}}">
+      <view
+        class="filter-chip {{currentFilter === 'all' ? 'chip-active' : ''}}"
+        data-filter="all"
+        bindtap="changeFilter"
+      >全部</view>
+      <view
+        class="filter-chip {{currentFilter === item.key ? 'chip-active' : ''}}"
+        style="--chip-color: {{item.color}}"
+        wx:for="{{categories}}"
+        wx:key="key"
+        data-filter="{{item.key}}"
+        bindtap="changeFilter"
+      >{{item.icon}} {{item.name}}</view>
+    </scroll-view>
+  </view>
+
+  <!-- 图谱画布区域（Canvas） -->
+  <view class="canvas-wrap" wx:if="{{nodeCount > 0}}">
+    <canvas
+      type="2d"
+      id="graphCanvas"
+      class="graph-canvas"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+    />
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{nodeCount === 0}}">
+    <text class="empty-icon">🕸️</text>
+    <text class="empty-text">还没有思维网络</text>
+    <text class="empty-hint">开始记录并建立关联，这里会生长出你的知识图谱</text>
+  </view>
+
+  <!-- 节点详情浮层 -->
+  <view class="node-popup {{showNodeDetail ? 'popup-show' : ''}}" wx:if="{{selectedNode}}">
+    <view class="popup-header">
+      <view class="tag tag-{{selectedNode.category}}">{{selectedNode.categoryName}}</view>
+      <text class="popup-close" bindtap="closePopup">✕</text>
+    </view>
+    <text class="popup-content">{{selectedNode.content}}</text>
+    <view class="popup-meta">
+      <text>{{selectedNode.timeAgo}}</text>
+      <text> · {{selectedNode.linkCount}} 条关联</text>
+    </view>
+    <view class="popup-action" data-id="{{selectedNode.id}}" bindtap="goToDetailFromGraph">
+      查看详情 →
+    </view>
+  </view>
+
+  <!-- 图例 -->
+  <view class="legend" wx:if="{{nodeCount > 0}}">
+    <view class="legend-item" wx:for="{{categories}}" wx:key="key">
+      <view class="legend-dot" style="background: {{item.color}}"></view>
+      <text class="legend-text">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 操作提示 -->
+  <view class="graph-tip" wx:if="{{nodeCount > 0}}">
+    <text>👆 点击节点查看详情 · 拖拽移动节点位置</text>
+  </view>
+</view>

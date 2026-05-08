@@ -1,0 +1,152 @@
+<!-- 织念 - 卡片详情页 -->
+<view class="container" wx:if="{{card}}">
+  <!-- 卡片主体 -->
+  <view class="detail-card card card-glow-{{card.category}}">
+    <view class="detail-header">
+      <view class="tag tag-{{card.category}}">{{categoryName}}</view>
+      <text class="detail-time">{{createdAtFormatted}}</text>
+    </view>
+
+    <!-- 编辑模式 -->
+    <block wx:if="{{isEditing}}">
+      <textarea
+        class="textarea-box edit-textarea"
+        value="{{editContent}}"
+        bindinput="onEditInput"
+        maxlength="2000"
+        auto-height
+        focus="{{true}}"
+      />
+      <view class="edit-actions">
+        <button class="btn-ghost" bindtap="cancelEdit">取消</button>
+        <button class="btn-primary" bindtap="saveEdit">保存修改</button>
+      </view>
+    </block>
+
+    <!-- 展示模式 -->
+    <block wx:else>
+      <text class="detail-content">{{card.content}}</text>
+      <view class="detail-meta">
+        <text class="meta-item" wx:if="{{card.updatedAt !== card.createdAt}}">
+          📝 更新于 {{updatedAtFormatted}}
+        </text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 关键词标签 -->
+  <view class="section-block" wx:if="{{card.keywords.length > 0 && !isEditing}}">
+    <text class="section-label">🔑 关键词</text>
+    <view class="kw-row">
+      <text class="kw-pill" wx:for="{{card.keywords}}" wx:key="*this">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 用户标签 -->
+  <view class="section-block" wx:if="{{card.tags.length > 0 && !isEditing}}">
+    <text class="section-label">🏷️ 标签</text>
+    <view class="kw-row">
+      <text class="pill-tag tag tag-{{card.category}}" wx:for="{{card.tags}}" wx:key="*this">#{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 关联区域（核心功能） -->
+  <view class="section-block">
+    <view class="section-header">
+      <text class="section-label">🔗 关联</text>
+      <text class="link-count" wx:if="{{linkedCards.length > 0}}">{{linkedCards.length}} 条关联</text>
+    </view>
+
+    <!-- 已关联的卡片列表 -->
+    <view class="linked-list" wx:if="{{linkedCards.length > 0}}">
+      <view
+        class="linked-item"
+        wx:for="{{linkedCards}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="goToLinkedCard"
+      >
+        <view class="linked-dot" style="background: {{item.categoryColor}}"></view>
+        <view class="linked-info">
+          <view class="tag tag-{{item.category}}" style="margin-bottom: 8rpx;">{{item.categoryName}}</view>
+          <text class="linked-content">{{item.content}}</text>
+          <text class="linked-time">{{item.timeAgo}}</text>
+        </view>
+        <text class="unlink-btn" data-linkid="{{item.linkId}}" catchtap="unlinkCard">✕</text>
+      </view>
+    </view>
+
+    <view class="no-links" wx:if="{{linkedCards.length === 0 && !isEditing}}">
+      <text>暂无关联，可以与其他记录建立连接</text>
+    </view>
+
+    <!-- 添加关联按钮 -->
+    <view class="add-link-btn" wx:if="{{!isEditing}}" bindtap="showLinkPicker">
+      <text>+ 建立新关联</text>
+    </view>
+  </view>
+
+  <!-- 自动推荐关联 -->
+  <view class="section-block" wx:if="{{recommendations.length > 0 && !isEditing}}">
+    <text class="section-label">💡 推荐关联</text>
+    <view class="rec-list">
+      <view
+        class="rec-item"
+        wx:for="{{recommendations}}"
+        wx:key="targetId"
+      >
+        <view class="rec-left">
+          <view class="tag tag-{{item.targetCategory}}" style="margin-bottom: 8rpx;">{{item.targetCatName}}</view>
+          <text class="rec-preview">{{item.targetContent}}</text>
+          <view class="rec-common-kws" wx:if="{{item.commonKeywords.length > 0}}">
+            <text class="common-kw" wx:for="{{item.commonKeywords}}" wx:key="*this" wx:for-item="kw">#{{kw}}</text>
+          </view>
+        </view>
+        <view class="rec-right">
+          <text class="rec-score-badge">{{item.score}}分</text>
+          <text class="rec-connect-btn" data-id="{{item.targetId}}" catchtap="connectRecommend">关联</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮栏 -->
+  <view class="bottom-bar" wx:if="{{!isEditing}}">
+    <view class="action-btn" bindtap="startEdit"><text>✏️ 编辑</text></view>
+    <view class="action-btn danger" bindtap="confirmDelete"><text>🗑️ 删除</text></view>
+  </view>
+</view>
+
+<!-- 关联选择器弹窗 -->
+<view class="modal-mask" wx:if="{{showPicker}}" bindtap="hideLinkPicker">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">选择要关联的记录</text>
+      <text class="modal-close" bindtap="hideLinkPicker">✕</text>
+    </view>
+    <view class="picker-search">
+      <input
+        class="input-box picker-input"
+        placeholder="搜索关键词..."
+        value="{{searchText}}"
+        bindinput="onSearchInput"
+      />
+    </view>
+    <scroll-view class="picker-list" scroll-y>
+      <view
+        class="picker-item"
+        wx:for="{{pickableCards}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="createLink"
+      >
+        <view class="tag tag-{{item.category}}">{{item.catName}}</view>
+        <text class="picker-item-content">{{item.content}}</text>
+        <text class="picker-item-time">{{item.timeAgo}}</text>
+      </view>
+      <view class="picker-empty" wx:if="{{pickableCards.length === 0}}">
+        <text>没有可关联的记录</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,171 @@
+/* ========================================
+   关联图谱页样式
+   ======================================== */
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.gh-left { flex: 1; }
+
+.gh-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+
+.gh-sub {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 4rpx;
+  display: block;
+}
+
+.gh-stats { display: flex; gap: 24rpx; }
+
+.gh-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-card);
+  padding: 12rpx 22rpx;
+  border-radius: 14rpx;
+  border: 1rpx solid var(--border-color);
+}
+
+.gh-num { font-size: 30rpx; font-weight: 700; color: var(--primary); }
+.gh-label { font-size: 18rpx; color: var(--text-muted); }
+
+/* 筛选栏 */
+.filter-bar { margin-bottom: 20rpx; }
+
+.filter-scroll { white-space: nowrap; }
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 26rpx;
+  border-radius: 20rpx;
+  background: var(--bg-card);
+  border: 1rpx solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 24rpx;
+  margin-right: 14rpx;
+  flex-shrink: 0;
+}
+
+.chip-active {
+  border-color: var(--chip-color, var(--primary));
+  color: var(--chip-color, var(--primary));
+  background: rgba(233, 69, 96, 0.08);
+}
+
+/* Canvas */
+.canvas-wrap {
+  width: 100%;
+  height: 70vh;
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  border: 1rpx solid var(--border-color);
+  overflow: hidden;
+  position: relative;
+}
+
+.graph-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 节点弹窗 */
+.node-popup {
+  position: fixed;
+  bottom: -100%;
+  left: 30rpx;
+  right: 30rpx;
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  padding: 28rpx;
+  border: 1rpx solid var(--border-color);
+  z-index: 100;
+  transition: bottom 0.3s ease;
+  box-shadow: 0 -8rpx 40rpx rgba(0, 0, 0, 0.3);
+}
+
+.popup-show {
+  bottom: calc(30rpx + env(safe-area-inset-bottom));
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.popup-close {
+  font-size: 28rpx;
+  color: var(--text-muted);
+  padding: 8rpx;
+}
+
+.popup-content {
+  font-size: 27rpx;
+  color: var(--text-primary);
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.popup-meta {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-bottom: 16rpx;
+}
+
+.popup-action {
+  text-align: center;
+  padding: 18rpx;
+  background: rgba(233, 69, 96, 0.1);
+  border-radius: 14rpx;
+  color: var(--primary);
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+/* 图例 */
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 28rpx;
+  margin-top: 20rpx;
+  padding: 16rpx 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+}
+
+.legend-text { font-size: 22rpx; color: var(--text-muted); }
+
+/* 提示 */
+.graph-tip {
+  text-align: center;
+  padding: 16rpx;
+  font-size: 22rpx;
+  color: var(--text-muted);
+}

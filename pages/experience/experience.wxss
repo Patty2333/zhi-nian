@@ -1,0 +1,2 @@
+@import '../../pages/spark/spark.wxss';
+.fab-experience { background: linear-gradient(135deg, #7bed9f, #2ed573); box-shadow: 0 8rpx 32rpx rgba(123, 237, 159, 0.4); }
