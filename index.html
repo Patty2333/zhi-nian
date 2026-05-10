@@ -1569,10 +1569,10 @@ let currentCardId = null  // 当前查看的卡片ID
 let graphFilter = 'all'
 
 // ====== 云同步 & 用户系统 ======
-// API 地址：云端后端（Vercel 同域部署，开发模式 fallback 到 localhost）
+// API 地址：云端后端（开发模式 fallback 到 localhost）
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
-  : window.location.origin
+  : 'https://intended-continent-asus-literally.trycloudflare.com'
 let currentUser = null   // { token, userId, username }
 let authMode = 'login'  // 'login' | 'register'
 let syncTimer = null
