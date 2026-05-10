@@ -22,7 +22,7 @@ function initSeedData() {
   const pattyUserId = 'f09d3fb2-c745-41ff-a34a-2aad885be4c4'
   if (!usersStore['Patty']) {
     usersStore['Patty'] = {
-      hash: '464f5846e01274b287e9316eab9aad15b2ecaf329798c72b50ad6a840a7b1da6b0c32c2293279aca7e3a580a7707ae55805cbd2f9237ef4f71f175995b768b52',
+      hash: '47ee0ef13fb33d984c178d705424b5f210e40e06821d07468460a8fa5a681a1e36e29a426247c7c5e9bb68b9eec76e36d4077b03b4e02946786ef1d7ca014abb',
       salt: 'be73f32c3b85f433917d04cc24651bd6',
       createdAt: '2026-05-09T02:27:38.106Z',
       userId: pattyUserId
