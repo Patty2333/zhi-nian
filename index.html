@@ -1569,7 +1569,10 @@ let currentCardId = null  // 当前查看的卡片ID
 let graphFilter = 'all'
 
 // ====== 云同步 & 用户系统 ======
-const API_BASE = window.location.origin  // 自动适配当前域名
+// API 地址：Vercel 云端后端（开发模式自动 fallback 到 localhost）
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
+  : 'https://zhi-nian-api.vercel.app'
 let currentUser = null   // { token, userId, username }
 let authMode = 'login'  // 'login' | 'register'
 let syncTimer = null

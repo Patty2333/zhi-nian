@@ -1,0 +1,1 @@
+{"name": "zhi-nian", "version": "1.0.0", "description": "织念 ZhiNian — 编织零散的念头", "main": "server.js", "scripts": {"start": "node server.js", "dev": "node server.js", "deploy:vercel": "npx vercel --prod --yes"}, "engines": {"node": ">=18"}}
