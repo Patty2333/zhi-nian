@@ -465,6 +465,17 @@ body {
   background: var(--bg-card);
   padding: 6px 16px; border-radius: 14px;
 }
+.zone-add-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 18px; border-radius: 14px;
+  background: linear-gradient(135deg, #c4763a, #db9054);
+  color: white; font-size: 14px; font-weight: 600;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(196,118,58,0.3);
+  transition: all 0.2s ease; flex-shrink: 0;
+}
+.zone-add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(196,118,58,0.4); }
+.zone-add-btn:active { transform: translateY(0); }
 
 .card-list { display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px; }
 .thought-card {
@@ -1332,6 +1343,7 @@ cursor: pointer; transition: all 0.15s;
       <div class="zone-desc" id="zoneDesc">突发奇想 · 碎片灵感</div>
     </div>
     <div class="zone-count" id="zoneCount">0 条</div>
+    <button class="zone-add-btn" onclick="openNewCardModal(currentCategory)" title="新建记录">✏️ 记录</button>
   </div>
   <div class="card-list" id="cardList"></div>
   <div class="empty-state" id="categoryEmpty" style="display:none;">
