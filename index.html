@@ -3115,6 +3115,8 @@ function goDetailFromGraph() { if(selectedGraphNode){closeNodePopup();openDetail
 document.addEventListener('DOMContentLoaded', () => {
 // 一次性迁移：用新算法重新提取所有已有卡片的关键词
 migrateKeywords()
+// 首次访问自动预置 Patty 的示例数据（如果本地为空）
+if (loadCards().length === 0) { saveCards(SEED_DATA.cards); saveLinks(SEED_DATA.links) }
 initAuth()  // 初始化用户登录状态
 setGreeting(); renderHomeStats()
 })
