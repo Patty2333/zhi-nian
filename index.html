@@ -1407,7 +1407,7 @@ cursor: pointer; transition: all 0.15s;
 <div class="auth-panel">
   <div class="auth-logo">🧶</div>
   <div class="auth-title" id="authTitle">欢迎回来</div>
-  <div class="auth-sub" id="authSub">登录后数据自动保存到云端</div>
+  <div class="auth-sub" id="authSub">登录后数据保存在本地设备</div>
   <div class="auth-err" id="authErr"></div>
   <input class="auth-field" id="authUser" placeholder="用户名（至少2位）" autocomplete="username">
   <input class="auth-field" id="authPwd" type="password" placeholder="密码（至少4位）" autocomplete="current-password">
@@ -1568,38 +1568,10 @@ let currentCategory = null // 当前浏览的分类
 let currentCardId = null  // 当前查看的卡片ID
 let graphFilter = 'all'
 
-// ====== 云同步 & 用户系统 ======
-// API 地址：云端后端（开发模式 fallback 到 localhost）
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
-  : 'https://intended-continent-asus-literally.trycloudflare.com'
-let currentUser = null   // { token, userId, username }
-let authMode = 'login'  // 'login' | 'register'
-let syncTimer = null
-
-// 初始化：检查本地存储的登录状态
-function initAuth() {
-  try {
-    const saved = localStorage.getItem('zhiNian_user')
-    if (saved) {
-      currentUser = JSON.parse(saved)
-      showLoggedIn()
-      smartSync()  // 智能同步（自动判断上传/下载/合并）
-    }
-  } catch(e) {}
-}
-
-// API 请求封装
-async function apiCall(path, body) {
-  const opts = {
-    method: body ? 'POST' : 'GET',
-    headers: { 'Content-Type': 'application/json' }
-  }
-  if (currentUser) opts.headers['Authorization'] = 'Bearer ' + currentUser.token
-  if (body) opts.body = JSON.stringify(body)
-  const res = await fetch(API_BASE + path, opts)
-  return await res.json()
-}
+// ====== 纯前端用户系统（localStorage 存储）======
+// 预置 Patty 账号（密码: patty24puth）
+const SEED_USER = { username: 'Patty', password: 'patty24puth', userId: 'f09d3fb2-c745-41ff-a34a-2aad885be4c4' }
+const SEED_DATA = {"cards":[{"id":"moy458rl792ig1","content":"因为工作的事情好焦虑，到底怎么缓解！！！","category":"emotion","tags":[],"keywords":["工作","焦虑","缓解"],"createdAt":"2026-05-09T08:59:59.265Z"},{"id":"moxrq05irywt67","content":"生命最温柔的时刻，是学会对自己说：你已经很努力了。（这是蛤蟆先生教会我的终极治愈）","category":"knowledge","tags":[],"keywords":["温柔","努力","终极治愈","蛤蟆先生"],"createdAt":"2026-05-09T03:12:12.870Z"},{"id":"moxro66k6uxss2","content":"你的人生剧本，只能由你自己改写。（原生家庭≠命运，你永远有选择权）","category":"knowledge","tags":[],"keywords":["选择权","原生家庭","人生剧本"],"createdAt":"2026-05-09T03:10:47.372Z"},{"id":"moxrmn2y47cgja","content":"当你停止自我审判，世界才会放过你。（那个批判你的声音，真的值得信任吗？）","category":"knowledge","tags":[],"keywords":["自我审判","批判","信任"],"createdAt":"2026-05-09T03:09:35.962Z"},{"id":"moxreqlgai8vqn","content":"讨好型人格的代价，是弄丢真实的自己。（警惕那些
 
 // 登录/注册弹窗
 function openAuthModal() {
@@ -1618,11 +1590,11 @@ function toggleAuthMode() {
   const b = document.getElementById('authSubmitBtn')
   const sw = document.getElementById('authSwitch')
   if (authMode === 'register') {
-    t.textContent = '创建账号'; s.textContent = '注册后数据自动保存到云端'
+    t.textContent = '创建账号'; s.textContent = '注册后数据保存在本地设备'
     b.textContent = '注 册'; sw.innerHTML = '已有账号？<a onclick="toggleAuthMode()">去登录</a>'
     document.getElementById('authPwd').placeholder = '设置密码（至少4位）'
   } else {
-    t.textContent = '欢迎回来'; s.textContent = '登录后数据自动保存到云端'
+    t.textContent = '欢迎回来'; s.textContent = '登录后数据保存在本地设备'
     b.textContent = '登 录'; sw.innerHTML = '还没有账号？<a onclick="toggleAuthMode()">立即注册</a>'
     document.getElementById('authPwd').placeholder = '密码（至少4位）'
   }
@@ -1633,34 +1605,41 @@ async function doAuth() {
   const pwd = document.getElementById('authPwd').value
   const errEl = document.getElementById('authErr')
   errEl.textContent = ''
-
   if (!user || user.length < 2) { errEl.textContent = '用户名至少2位'; return }
   if (!pwd || pwd.length < 4) { errEl.textContent = '密码至少4位'; return }
 
-  const endpoint = authMode === 'register' ? '/api/register' : '/api/login'
-  const res = await apiCall(endpoint, { username: user, password: pwd })
-
-  if (res.error) { errEl.textContent = res.error; return }
-  if (res.ok && res.token) {
-    currentUser = { token: res.token, userId: res.userId, username: res.username }
+  // 预置 Patty 账号
+  if (user === SEED_USER.username && pwd === SEED_USER.password) {
+    currentUser = { userId: SEED_USER.userId, username: user }
     localStorage.setItem('zhiNian_user', JSON.stringify(currentUser))
-    closeAuthModal()
-    showLoggedIn()
-    // 智能同步：注册时上传本地数据；登录时先拉取云端，如果本地有数据而云端为空则上传
-    if (authMode === 'register') {
-      pushToCloud()
-    } else {
-      smartSync()
-    }
-    showToast(authMode === 'register' ? '🎉 注册成功，已同步数据' : '✅ 登录成功')
+    if (loadCards().length === 0) { saveCards(SEED_DATA.cards); saveLinks(SEED_DATA.links) }
+    closeAuthModal(); showLoggedIn(); refreshAllViews()
+    showToast(`🧶 欢迎回来，${user}！`)
+    return
   }
+  // 其他账号走 localStorage
+  const users = getRegisteredUsers()
+  if (authMode === 'register') {
+    if (users[user]) { errEl.textContent = '用户名已存在'; return }
+    const uid='usr_'+simpleHash(user+Date.now())
+    users[user]={passwordHash:simpleHash(pwd),userId:uid,createdAt:new Date().toISOString()}
+    saveRegisteredUsers(users)
+    currentUser={userId:uid,username:user}
+    localStorage.setItem('zhiNian_user',JSON.stringify(currentUser))
+    closeAuthModal();showLoggedIn()
+    showToast(`✅ 注册成功，欢迎 ${user}！`);return
+  }
+  if(!users[user]||users[user].passwordHash!==simpleHash(pwd)){errEl.textContent='用户名或密码错误';return}
+  currentUser={userId:users[user].userId,username:user}
+  localStorage.setItem('zhiNian_user',JSON.stringify(currentUser))
+  closeAuthModal();showLoggedIn();refreshAllViews()
 }
 
 function showLoggedIn() {
   document.getElementById('userBadge').style.display = 'inline-flex'
   document.getElementById('userName').textContent = currentUser.username
   document.getElementById('loginBtn').style.display = 'none'
-  updateSyncStatus('☁️ 已连接')
+  updateSyncStatus('💾 本地存储')
 }
 
 // ====== 个人中心面板 ======
@@ -1883,117 +1862,24 @@ function logout() {
   showToast('已退出登录')
 }
 
-// 云端同步：上传
-async function pushToCloud() {
-  if (!currentUser) return
-  try {
-    updateSyncStatus('⬆️ 同步中...')
-    await apiCall('/api/sync', { cards: loadCards(), links: loadLinks() })
-    updateSyncStatus('☁️ 已同步')
-  } catch(e) {
-    updateSyncStatus('❌ 同步失败')
-  }
-}
+// 纯前端：数据已自动保存到 localStorage，无需额外同步
+function pushToCloud() {}
+function pullFromCloud() {}
+function scheduleSync() {}
 
-// 云端同步：下载
-async function pullFromCloud() {
-  if (!currentUser) return
-  try {
-    updateSyncStatus('⬇️ 拉取中...')
-    const data = await apiCall('/api/data')
-    if (data.cards) saveCards(data.cards)
-    if (data.links) saveLinks(data.links)
-    updateSyncStatus('☁️ 已同步')
-    // 刷新页面显示
-    refreshAllViews()
-  } catch(e) {
-    updateSyncStatus('❌ 同步失败')
-  }
-}
-
-function updateSyncStatus(text) {
-  const el = document.getElementById('syncStatus')
-  if (el) el.textContent = text
-}
-
-// 数据变更后自动触发同步（防抖）
-function scheduleSync() {
-  if (!currentUser) return
-  clearTimeout(syncTimer)
-  syncTimer = setTimeout(pushToCloud, 2000)  // 2秒后自动同步
-}
-
-// 强制上传本地所有数据到云端（覆盖云端）
+// 强制保存提示
 async function forcePushToCloud() {
-  if (!currentUser) { showToast('请先登录'); return }
   const localCards = loadCards()
-  const localLinks = loadLinks()
-  if (localCards.length === 0) { showToast('本地没有记录可同步'); return }
-
-  if (!confirm(`确定上传 ${localCards.length} 条本地记录到云端吗？\n（将覆盖云端现有数据）`)) return
-
-  try {
-    updateSyncStatus('⬆️ 上传中...')
-    await apiCall('/api/sync', { cards: localCards, links: localLinks })
-    updateSyncStatus('☁️ 已同步')
-    showToast(`📤 已上传 ${localCards.length} 条记录到 Patty 账号`)
-  } catch(e) {
-    updateSyncStatus('❌ 同步失败')
-    showToast('同步失败，请检查网络')
-  }
+  if (localCards.length === 0) { showToast('没有记录'); return }
+  showToast(`💾 已自动保存 ${localCards.length} 条记录`)
 }
 
-// 刷新所有视图（拉取后调用）
 function refreshAllViews() {
 switchTab(currentCategory ? 'category' : 'home')
 renderGraph()
 }
 
-// 智能同步：登录时合并本地与云端数据
-async function smartSync() {
-  if (!currentUser) return
-  try {
-    updateSyncStatus('⬇️ 检查云端数据...')
-    const cloudData = await apiCall('/api/data')
-    const localCards = loadCards()
-    const localLinks = loadLinks()
-    const cloudCards = cloudData.cards || []
-    const cloudLinks = cloudData.links || []
-
-    if (cloudCards.length === 0 && localCards.length > 0) {
-      // 云端为空但本地有数据 → 上传本地到云端
-      updateSyncStatus('⬆️ 上传本地数据...')
-      await apiCall('/api/sync', { cards: localCards, links: localLinks })
-      showToast(`📤 已上传 ${localCards.length} 条记录到云端`)
-    } else if (cloudCards.length > 0 && localCards.length === 0) {
-      // 本地为空但云端有数据 → 拉取到本地
-      saveCards(cloudCards)
-      saveLinks(cloudLinks)
-      showToast(`📥 已拉取 ${cloudCards.length} 条记录`)
-    } else if (cloudCards.length > 0 && localCards.length > 0) {
-      // 两边都有数据 → 合并（以云端为主，补充本地独有的）
-      const cloudIds = new Set(cloudCards.map(c => c.id))
-      const newLocalCards = localCards.filter(c => !cloudIds.has(c.id))
-      if (newLocalCards.length > 0) {
-        const merged = [...cloudCards, ...newLocalCards]
-        const mergedLinks = [...cloudLinks, ...localLinks]
-        saveCards(merged)
-        saveLinks(mergedLinks)
-        await apiCall('/api/sync', { cards: merged, links: mergedLinks })
-        showToast(`🔄 已合并 ${newLocalCards.length} 条新记录`)
-      } else {
-        // 完全一致，直接用云端覆盖确保一致性
-        saveCards(cloudCards)
-        saveLinks(cloudLinks)
-        showToast(`☁️ 已同步 ${cloudCards.length} 条记录`)
-      }
-    }
-    updateSyncStatus('☁️ 已同步')
-    refreshAllViews()
-  } catch(e) {
-    updateSyncStatus('❌ 同步失败')
-  }
-}
+function smartSync() {}
 
 // 保存后刷新当前视图（不切换页面，只更新数据）
 function refreshAfterSave() {
