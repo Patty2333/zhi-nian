@@ -1259,7 +1259,113 @@ cursor: pointer; transition: all 0.15s;
   background: var(--primary); color: #fff;
 }
 .crop-save-btn:hover { background: var(--primary-light); }
-</style>
+
+    /* ===== 欢迎页（未登录/空数据时显示） ===== */
+    .welcome-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 160px);
+      padding: 48px 24px 40px;
+      text-align: center;
+      animation: welcomeIn 0.5s ease-out;
+    }
+    .welcome-screen.active { display: flex; }
+    @keyframes welcomeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .welcome-logo {
+      font-size: 72px;
+      margin-bottom: 16px;
+      animation: logoFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 4px 12px rgba(124,92,252,0.15));
+    }
+    @keyframes logoFloat {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(-3deg); }
+    }
+    .welcome-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .welcome-sub {
+      font-size: 14.5px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 32px;
+      max-width: 280px;
+    }
+    .welcome-cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #7C5CFC, #9B7CFE);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 50px;
+      border: none;
+      box-shadow: 0 6px 24px rgba(124,92,252,0.3);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-bottom: 36px;
+    }
+    .welcome-cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(124,92,252,0.4);
+    }
+    .welcome-cta-btn:active { transform: scale(0.97); }
+    .welcome-prompts {
+      width: 100%;
+      max-width: 320px;
+      text-align: left;
+    }
+    .welcome-prompts-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .welcome-prompt {
+      padding: 14px 16px 14px 46px;
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color, var(--border));
+      border-radius: var(--radius-md);
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      display: block;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .welcome-prompt::before {
+      content: attr(data-icon);
+      position: absolute;
+      left: 15px;
+      top: 14px;
+      font-size: 16px;
+    }
+    .welcome-prompt:hover {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateX(4px);
+      box-shadow: 0 2px 12px rgba(124,92,252,0.1);
+    }
+
+    /* 首页正常内容（有数据时显示） */
+    .home-normal { display: none; }
+    .home-normal.active { display: block; }
+  </style>
 </head>
 <body>
 
@@ -1283,6 +1389,26 @@ cursor: pointer; transition: all 0.15s;
 
 <!-- ========== 首页 / 思维宫殿 ========== -->
 <section id="page-home" class="page active">
+
+  <!-- 欢迎页（未登录或无数据时显示） -->
+  <div class="welcome-screen" id="welcomeScreen">
+    <div class="welcome-logo">🧶</div>
+    <div class="welcome-title">欢迎来到织念</div>
+    <div class="welcome-sub">这里是你思维的花园<br>每一个念头都值得被捕捉和连接</div>
+    <button class="welcome-cta-btn" onclick="openNewCardModal()">
+      开始第一个念头 →
+    </button>
+    <div class="welcome-prompts">
+      <div class="welcome-prompts-label">💡 试试从这些开始</div>
+      <button class="welcome-prompt" data-icon="💡" onclick="openNewCardModal()">今天学到了什么新知识？</button>
+      <button class="welcome-prompt" data-icon="⚡" onclick="openNewCardModal()">突然冒出的一个想法...</button>
+      <button class="welcome-prompt" data-icon="🌊" onclick="openNewCardModal()">此刻心情如何？</button>
+      <button class="welcome-prompt" data-icon="🆕" onclick="openNewCardModal()">最近尝试了什么新鲜事？</button>
+    </div>
+  </div>
+
+  <!-- 首页正常内容（有数据时显示） -->
+  <div class="home-normal active" id="homeNormal">
   <div class="home-header">
     <div class="greeting" id="greetingText">下午好</div>
     <div class="greeting-sub">编织零散的念头，找回长期思考的能力</div>
@@ -1326,11 +1452,12 @@ cursor: pointer; transition: all 0.15s;
   <div class="section-title" id="recentSectionTitle" style="display:none;"><span>最近记录</span><span onclick="showAllRecent()">查看全部 ›</span></div>
   <div class="recent-list" id="recentList"></div>
 
-  <div class="empty-state" id="homeEmpty">
+  <div class="empty-state" id="homeEmpty" style="display:none;">
     <div class="ei-icon">💡</div>
     <div class="ei-text">还没有任何记录</div>
     <div class="ei-hint" id="homeEmptyHint">点击右下角 <span style="color:var(--primary);cursor:pointer;font-weight:500;" onclick="openNewCardModal()">✏️</span> 或上方「记录」按钮，开始你的第一条思绪</div>
   </div>
+  </div><!-- /homeNormal -->
 </section>
 
 <!-- ========== 分区列表页 ========== -->
@@ -2412,6 +2539,29 @@ function renderHomeStats() {
   const cards = loadCards(), links = loadLinks()
   const today = new Date().toISOString().slice(0,10)
   const todayCnt = cards.filter(c => c.createdAt && c.createdAt.startsWith(today)).length
+
+  // 欢迎页 vs 正常内容切换
+  const welcomeEl = document.getElementById('welcomeScreen')
+  const normalEl = document.getElementById('homeNormal')
+  if (welcomeEl && normalEl) {
+    if (cards.length === 0) {
+      welcomeEl.classList.add('active')
+      normalEl.classList.remove('active')
+      // Still update stats (show 0)
+      document.getElementById('totalCards').textContent = '0'
+      document.getElementById('totalLinks').textContent = '0'
+      document.getElementById('todayCount').textContent = '0'
+      document.getElementById('countSpark').textContent = '0'
+      document.getElementById('countKnowledge').textContent = '0'
+      document.getElementById('countEmotion').textContent = '0'
+      document.getElementById('countExperience').textContent = '0'
+      return
+    } else {
+      welcomeEl.classList.remove('active')
+      normalEl.classList.add('active')
+    }
+  }
+
   document.getElementById('totalCards').textContent = cards.length
   document.getElementById('totalLinks').textContent = links.length
   document.getElementById('todayCount').textContent = todayCnt
@@ -3116,7 +3266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 一次性迁移：用新算法重新提取所有已有卡片的关键词
 migrateKeywords()
 // 首次访问自动预置 Patty 的示例数据（如果本地为空）
-if (loadCards().length === 0) { saveCards(SEED_DATA.cards); saveLinks(SEED_DATA.links) }
+  // 注意：已移除自动预置 Patty 示例数据，未登录时不再填充
 initAuth()  // 初始化用户登录状态
 setGreeting(); renderHomeStats()
 })
