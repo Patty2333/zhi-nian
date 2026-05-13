@@ -2436,41 +2436,47 @@ function extractKeywords(text) {
   if (!text) return []
 
   const segmented = segmentText(text)
-
   const engTerms = (text.match(/[a-zA-Z]{2,}(?:[a-zA-Z0-9]*)/g) || [])
     .map(w => { const c = w.replace(/[^a-zA-Z]$/, ''); return c.length >= 2 ? c : null })
     .filter(Boolean)
     .map(w => ({ word: w, isDict: DICT.has(w) || DICT.has(w.toLowerCase()), isEng: true }))
-
   const numCnTerms = []
-  const ncMatches = text.match(/\d+[一二三四五六七八九十百千万亿]*[\u4e00-\u9fa5]+|[一二三四五六七八九十百千万亿]+\d*[\u4e00-\u9fa5]+/g)
+  const ncMatches = text.match(/\d+[一二三四五六七八九十百千万亿]*[一-龥]+|[一二三四五六七八九十百千万亿]+\d*[一-龥]+/g)
   if (ncMatches) ncMatches.forEach(m => { if (m.length >= 2 && m.length <= 6 && !STOP_WORDS.has(m)) numCnTerms.push({ word: m, isDict: DICT.has(m), isEng: false }) })
-
   const allCandidates = [...segmented, ...engTerms, ...numCnTerms]
-  const filtered = allCandidates.filter(c => !STOP_WORDS.has(c.word) && c.word.length >= 2)
+
+  // 过滤停用词 + 垃圾模式
+  const filtered = allCandidates.filter(c => {
+    if (STOP_WORDS.has(c.word) || c.word.length < 2) return false
+    // "的X" 模式（如 "的梦"、"的人"）非词典词则过滤
+    if (/^的.+$/u.test(c.word) && !DICT.has(c.word)) return false
+    // "X了" 虚词碎片（非词典词，<=3字）
+    if (/^.+了$/u.test(c.word) && !DICT.has(c.word) && c.word.length <= 3) return false
+    // 代词+虚词组合
+    if (/^(我|你|他|她|它|这|邠|哪)[是在了有对把被让给从向]/.test(c.word)) return false
+    return true
+  })
   if (filtered.length === 0) return []
 
-  const tf = {}
-  filtered.forEach(c => {
+  // 得分 + 首次出现位置
+  const wordInfo = new Map()
+  filtered.forEach((c, idx) => {
     const key = c.word.toLowerCase()
-    if (!tf[key]) tf[key] = { count: 0, len: c.word.length, original: c.word, dictBonus: 0, engBonus: 0 }
-    tf[key].count++
-    if (c.isDict) tf[key].dictBonus += 3
-    if (c.isEng) tf[key].engBonus += 1
+    if (!wordInfo.has(key)) wordInfo.set(key, { word: c.word, count: 0, firstPos: idx, dictBonus: c.isDict ? 8 : 0, len: c.word.length, isEng: !!c.isEng })
+    const info = wordInfo.get(key); info.count++
+    if (c.isDict) info.dictBonus += 2
+    if (c.isEng) info.engBonus = (info.engBonus || 0) + 1
   })
 
-  const ranked = Object.entries(tf)
-    .map(([key, v]) => ({ word: v.original, score: v.count * 3 + v.dictBonus + v.len * 0.5 + v.engBonus, count: v.count, len: v.len }))
-    .sort((a, b) => {
-      if (Math.abs(b.score - a.score) > 0.1) return b.score - a.score
-      if (b.len !== a.len) return b.len - a.len
-      return b.count - a.count
-    })
-    .slice(0, 8)
-    .map(r => r.word)
+  // 按得分取 Top 10，再按原文顺序排列
+  const scored = Array.from(wordInfo.values()).map(info => ({ word: info.word, score: info.count * 3 + info.dictBonus + info.len * 0.5 + (info.engBonus || 0), firstPos: info.firstPos }))
+  scored.sort((a, b) => b.score - a.score)
+  const top10 = scored.slice(0, 10)
+  top10.sort((a, b) => a.firstPos - b.firstPos)
 
-  return ranked
+  return top10.map(t => t.word)
 }
+
 
 // ---- 自动关联推荐 ----
 
