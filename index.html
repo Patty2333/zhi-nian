@@ -593,6 +593,15 @@ body {
   padding: 14px 18px;
   margin-bottom: 16px;
   border: 1px solid var(--border-color);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+.kw-preview.kw-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 .kw-preview-label { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; display: block; }
 .kw-preview-tags { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -2724,6 +2733,9 @@ function openNewCardModal(preselectedCat) {
   selectedTagsForNew = []
   renderCatSelector()
 document.getElementById('newContent').value = ''
+  const kwp = document.getElementById('kwPreview')
+  if (kwp) { kwp.style.display = 'none'; kwp.classList.remove('kw-visible') }
+  if (_kwDebounceTimer) { clearTimeout(_kwDebounceTimer); _kwDebounceTimer = null }
 document.getElementById('charNum').textContent = '0'
 document.getElementById('kwPreview').style.display = 'none'
 document.getElementById('quickTagsArea').style.display = 'none'
@@ -2763,6 +2775,9 @@ function updatePlaceholder() {
   document.getElementById('saveBtn').textContent = `💾 存入${cat.name}`
 }
 
+// 防抖定时器：关键词提取延迟 600ms，避免频繁闪现
+let _kwDebounceTimer = null
+
 function onContentInput() {
   const val = document.getElementById('newContent').value
   const len = val.length
@@ -2770,16 +2785,25 @@ function onContentInput() {
   document.getElementById('charCount').className = 'char-count' + (len > 1800 ? ' warn' : '')
   document.getElementById('saveBtn').disabled = !val.trim()
 
-  // 关键词预览（支持用户编辑）
-  const kws = extractKeywords(val)
-  editedKeywords = [...kws] // 初始化为自动提取的结果（每次输入重新提取，覆盖用户之前的编辑）
-const kwEl = document.getElementById('kwPreview')
-if (editedKeywords.length > 0) {
-kwEl.style.display = 'block'
-renderEditableKwTags()
-} else {
-kwEl.style.display = 'none'
-}
+  // 清除之前的定时器
+  if (_kwDebounceTimer) { clearTimeout(_kwDebounceTimer) }
+
+  // 延迟提取关键词（防抖 600ms）
+  _kwDebounceTimer = setTimeout(() => {
+    const kws = extractKeywords(val)
+    editedKeywords = [...kws]
+    const kwEl = document.getElementById('kwPreview')
+    if (editedKeywords.length > 0) {
+      kwEl.style.display = 'block'
+      // 触发重排以启动 CSS 过渡动画
+      requestAnimationFrame(() => { kwEl.classList.add('kw-visible') })
+      renderEditableKwTags()
+    } else {
+      kwEl.classList.remove('kw-visible')
+      // 动画结束后隐藏
+      setTimeout(() => { if (!kwEl.classList.contains('kw-visible')) kwEl.style.display = 'none' }, 300)
+    }
+  }, 600)
 }
 
 function renderEditableKwTags() {
@@ -2864,6 +2888,9 @@ refreshAfterSave()
 // 重置新建表单
 function resetNewCardForm() {
 document.getElementById('newContent').value = ''
+  const kwp = document.getElementById('kwPreview')
+  if (kwp) { kwp.style.display = 'none'; kwp.classList.remove('kw-visible') }
+  if (_kwDebounceTimer) { clearTimeout(_kwDebounceTimer); _kwDebounceTimer = null }
 document.getElementById('charNum').textContent = '0'
 document.getElementById('kwPreview').style.display = 'none'
 document.getElementById('selTags').innerHTML = ''
