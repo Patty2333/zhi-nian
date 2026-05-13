@@ -586,8 +586,8 @@ body {
 .char-count { text-align: right; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 .char-count.warn { color: var(--danger); }
 
-/* 关键词预览 */
-.kw-preview {
+/* 关键词预览 - 新建记录（带动画） */
+#kwPreview {
   background: var(--bg-input);
   border-radius: var(--radius-md);
   padding: 14px 18px;
@@ -597,6 +597,14 @@ body {
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
+}
+/* 关键词预览 - 编辑模式（始终可见） */
+#editKwPreview {
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-color);
 }
 .kw-preview.kw-visible {
   opacity: 1;
@@ -3010,7 +3018,7 @@ function startEdit(id) {
   const dc = page.querySelector('.dc-content')
   if (dc) {
     dc.outerHTML = `<textarea class="textarea-input edit-area" id="editArea" style="min-height:250px;margin-top:12px;" oninput="onEditContentInput()">${escapeHtml(card.content)}</textarea>
-      <div class="kw-preview" id="editKwPreview" style="display:block;margin-top:14px;">
+      <div class="kw-preview" id="editKwPreview" class="kw-visible" style="display:block;margin-top:14px;">
         <span class="kw-preview-label">🔑 关键词 <small style="font-weight:400;opacity:0.6;">（点击 × 移除）</small></span>
         <div class="kw-preview-tags" id="editKwTags"></div>
         <div class="kw-add-row">
