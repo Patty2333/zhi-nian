@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>织念 ZhiNian — UI 优化方案原型图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  background: #e8e4df;
+  color: #3d3428;
+  min-height: 100vh;
+}
+
+/* ====== 原型导航 ====== */
+.proto-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.proto-nav-title {
+  font-size: 15px; font-weight: 700; color: #c4763a;
+  margin-right: 12px;
+  letter-spacing: 1px;
+}
+.proto-tab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  background: #f5f0e8;
+  color: #6b5d4d;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.proto-tab:hover { background: #efe8dc; }
+.proto-tab.active {
+  background: #c4763a;
+  color: white;
+  border-color: #c4763a;
+  box-shadow: 0 2px 10px rgba(196,118,58,0.3);
+}
+.proto-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+}
+.badge-p0 { background: #c76a5a; color: white; }
+.badge-p1 { background: #d4853a; color: white; }
+.badge-p2 { background: #7aa882; color: white; }
+
+/* ====== 原型展示区 ====== */
+.proto-stage {
+  padding: 80px 24px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.proto-frame {
+  background: #f0ebe4;
+  border-radius: 24px;
+  padding: 0;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.04),
+    0 8px 40px rgba(0,0,0,0.08),
+    inset 0 0 0 1px rgba(255,255,255,0.5);
+  overflow: hidden;
+  display: none;
+  width: 390px;
+  min-height: 780px;
+  position: relative;
+}
+.proto-frame.active { display: block; animation: frameIn 0.4s ease; }
+@keyframes frameIn { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* 手机框架顶部 */
+.phone-notch {
+  height: 44px;
+  background: linear-gradient(180deg, #2a2520 0%, #3d3428 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.phone-notch::before {
+  content: '';
+  width: 90px; height: 28px;
+  background: #1a1614;
+  border-radius: 14px;
+}
+.phone-statusbar {
+  height: 20px;
+  background: #fffdf8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3d3428;
+}
+
+/* ====== 标签标注 ====== */
+.proto-label {
+  position: absolute;
+  z-index: 10;
+  background: #1a1614;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+.proto-label::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #1a1614;
+}
+.proto-label.right { right: -4px; top: 60px; }
+.proto-label.left { left: -4px; top: 120px; }
+.proto-label.bottom { bottom: 80px; left: 50%; transform: translateX(-50%); }
+.proto-label.bottom::after { top: -5px; bottom: auto; border-top: none; border-bottom: 5px solid #1a1614; }
+
+/* ====== 对比标记 ====== */
+.compare-tag {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  z-index: 10;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+.tag-before { background: #c76a5a; color: white; }
+.tag-after { background: #6b9e6b; color: white; }
+
+/* ====== 通用设计变量（复用织念原有变量）====== */
+:root {
+  --p-primary: #c4763a;
+  --p-primary-light: #d4945c;
+  --p-bg: #faf6ee;
+  --p-card: #fffdf8;
+  --p-card-hover: #fef9ef;
+  --p-text: #3d3428;
+  --p-text-sec: #6b5d4d;
+  --p-muted: #9a8b78;
+  --p-border: #e8dfd2;
+  --p-spark: #d4853a;
+  --p-knowledge: #7a9cc6;
+  --p-emotion: #c97a9a;
+  --p-experience: #7aa882;
+}
+
+/* ============================================================
+   FRAME 01: 当前首页 (Before)
+   ============================================================ */
+.f01-content { background: var(--p-bg); min-height: 720px; padding: 16px 16px 100px; }
+.f01-navbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 4px; margin-bottom: 20px;
+}
+.f01-brand { font-size: 22px; font-weight: 600; letter-spacing: 3px; color: var(--p-text); }
+.f01-brand span { color: var(--p-primary); }
+.f01-greeting { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+.f01-greeting-sub { font-size: 13px; color: var(--p-muted); margin-bottom: 20px; }
+
+.f01-stats {
+  display: flex; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(145deg, rgba(255,255,255,0.7), rgba(250,246,240,0.3));
+  border: 1px solid rgba(255,255,255,0.5);
+  margin-bottom: 24px;
+}
+.f01-stat { flex: 1; text-align: center; padding: 14px 8px; border-right: 1px solid rgba(232,223,210,0.4); }
+.f01-stat:last-child { border-right: none; }
+.f01-stat-num { font-size: 24px; font-weight: 800; color: var(--p-primary); }
+.f01-stat-lbl { font-size: 10.5px; color: var(--p-muted); margin-top: 2px; }
+
+.f01-section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+.f01-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.f01-cat-card {
+  background: linear-gradient(148deg, rgba(255,255,255,0.74), rgba(250,245,235,0.3));
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 20px; padding: 18px 16px;
+  cursor: default;
+}
+.f01-cat-icon {
+  width: 44px; height: 44px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 10px;
+}
+.f01-cat-icon.spark { background: linear-gradient(135deg, rgba(212,133,58,0.18), rgba(212,133,58,0.08)); }
+.f01-cat-icon.knowledge { background: linear-gradient(135deg, rgba(122,156,198,0.17), rgba(122,156,198,0.07)); }
+.f01-cat-icon.emotion { background: linear-gradient(135deg, rgba(201,122,154,0.17), rgba(201,122,154,0.07)); }
+.f01-cat-icon.experience { background: linear-gradient(135deg, rgba(122,168,130,0.17), rgba(122,168,130,0.07)); }
+.f01-cat-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.f01-cat-desc { font-size: 11.5px; color: var(--p-muted); }
+
+.f01-recent-list { display: flex; flex-direction: column; gap: 10px; }
+.f01-recent-item {
+  background: var(--p-card); border: 1px solid var(--p-border);
+  border-radius: 16px; padding: 15px 18px;
+  cursor: default;
+}
+.f01-recent-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.f01-tag {
+  display: inline-flex; padding: 3px 10px; border-radius: 10px;
+  font-size: 11px; font-weight: 500;
+}
+.f01-tag-spark { background: rgba(212,133,58,0.12); color: #a66a28; }
+.f01-time { font-size: 11px; color: var(--p-muted); }
+.f01-recent-content { font-size: 13.5px; color: var(--p-text-sec); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+.f01-fab {
+  position: absolute; bottom: 72px; right: 20px;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: linear-gradient(135deg, #c4763a, #db9054);
+  color: white; font-size: 24px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(196,118,58,0.35);
+}
+
+/* ============================================================
+   FRAME 02: 时间流式首页 (After - P0)
+   ============================================================ */
+.f02-content { background: var(--p-bg); min-height: 720px; padding: 0 0 100px; }
+.f02-navbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 5;
+}
+.f02-brand { font-size: 20px; font-weight: 700; }
+.f02-brand-icon { color: var(--p-primary); margin-right: 4px; }
+.f02-nav-actions { display: flex; gap: 8px; align-items: center; }
+.f02-nav-btn {
+  padding: 5px 12px; border-radius: 14px;
+  background: rgba(196,118,58,0.08); color: var(--p-primary);
+  font-size: 12px; font-weight: 600; border: none;
+}
+.f02-search-hint {
+  padding: 6px 14px; border-radius: 14px;
+  background: #f0ebe4; color: var(--p-muted);
+  font-size: 12px; display: flex; align-items: center; gap: 6px;
+}
+
+/* 日期分组 */
+.f02-date-group { padding: 0 16px; margin-top: 8px; }
+.f02-date-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px; padding: 0 4px;
+}
+.f02-date-day { font-size: 15px; font-weight: 800; color: var(--p-text); }
+.f02-date-label { font-size: 12px; color: var(--p-muted); font-weight: 500; }
+.f02-date-dot {
+  flex: 1; height: 1px; background: var(--p-border);
+  position: relative;
+}
+.f02-date-dot::after {
+  content: ''; position: absolute; right: 0; top: -3px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--p-border);
+}
+
+/* Hero Card - 主卡片（大） */
+.f02-hero-card {
+  background: var(--p-card);
+  border-radius: 20px;
+  padding: 22px 20px 18px;
+  margin: 0 4px 12px;
+  box-shadow: 0 2px 12px rgba(61,52,40,0.05);
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid var(--p-spark);
+}
+.f02-hero-card .card-accent-bar { position: absolute; left: 0; top: 24px; bottom: 24px; width: 4px; border-radius: 2px; }
+.f02-hero-card.spark { border-left-color: var(--p-spark); }
+.f02-hero-card.knowledge { border-left-color: var(--p-knowledge); }
+.f02-hero-card.emotion { border-left-color: var(--p-emotion); }
+.f02-hero-card.experience { border-left-color: var(--p-experience); }
+
+.f02-card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.f02-cat-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+}
+.f02-cat-pill.spark { background: rgba(212,133,58,0.1); color: #a66a28; }
+.f02-cat-pill.knowledge { background: rgba(122,156,198,0.1); color: #567499; }
+.f02-cat-pill.emotion { background: rgba(201,122,154,0.1); color: #a55a7a; }
+.f02-cat-pill.experience { background: rgba(122,168,130,0.1); color: #5a8262; }
+.f02-card-time { font-size: 11.5px; color: var(--p-muted); }
+
+.f02-card-body { font-size: 15px; line-height: 1.75; color: var(--p-text); margin-bottom: 14px; }
+.f02-kw-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.f02-kw-pill {
+  font-size: 11.5px; padding: 4px 12px; border-radius: 20px;
+  background: rgba(196,118,58,0.07); color: #a66a28;
+  border: 1px solid rgba(196,118,58,0.1);
+  font-weight: 500;
+}
+
+/* 关联子卡片区域 */
+.f02-link-section { margin: 14px 0 4px; }
+.f02-link-label {
+  font-size: 11px; color: var(--p-muted); font-weight: 600;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+}
+.f02-link-cards { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.f02-mini-card {
+  flex: 0 0 auto; width: 160px;
+  background: #f8f3ea; border-radius: 14px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--p-border);
+}
+.f02-mini-card.spark { border-left-color: var(--p-spark); }
+.f02-mini-card.knowledge { border-left-color: var(--p-knowledge); }
+.f02-mini-card.emotion { border-left-color: var(--p-emotion); }
+.f02-mini-card.experience { border-left-color: var(--p-experience); }
+.f02-mini-cat { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.f02-mini-cat.spark { color: #a66a28; }
+.f02-mini-cat.knowledge { color: #567499; }
+.f02-mini-cat.emotion { color: #a55a7a; }
+.f02-mini-cat.experience { color: #5a8262; }
+.f02-mini-text { font-size: 12.5px; color: var(--p-text-sec); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.f02-mini-kw { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.f02-mini-kw span { font-size: 9.5px; padding: 2px 7px; border-radius: 8px; background: rgba(196,118,58,0.06); color: var(--p-muted); }
+
+/* 普通卡片（非hero） */
+.f02-normal-card {
+  background: var(--p-card);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin: 0 8px 10px;
+  box-shadow: 0 1px 6px rgba(61,52,40,0.04);
+  border-left: 3px solid var(--p-border);
+}
+.f02-normal-card.spark { border-left-color: var(--p-spark); }
+.f02-normal-card.knowledge { border-left-color: var(--p-knowledge); }
+.f02-normal-card.emotion { border-left-color: var(--p-emotion); }
+.f02-normal-card.experience { border-left-color: var(--p-experience); }
+.f02-normal-card .f02-card-body { font-size: 14px; margin-bottom: 8px; -webkit-line-clamp: 2; }
+
+.f02-fab {
+  position: absolute; bottom: 72px; right: 18px;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: linear-gradient(135deg, #c4763a, #db9054);
+  color: white; font-size: 26px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 24px rgba(196,118,58,0.4);
+}
+
+/* ============================================================
+   FRAME 03: 卡片色带对比 (Before vs After)
+   ============================================================ */
+.f03-content { background: var(--p-bg); min-height: 720px; padding: 16px 16px 100px; }
+.f03-header { text-align: center; padding: 20px 0 16px; }
+.f03-header h2 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.f03-header p { font-size: 12px; color: var(--p-muted); }
+
+.f03-compare { display: flex; flex-direction: column; gap: 20px; }
+
+.f03-before-label, f03-after-label {
+  font-size: 11px; font-weight: 700; margin-bottom: 8px;
+  padding: 3px 10px; border-radius: 6px; display: inline-block;
+}
+.f03-before-label { background: rgba(199,106,90,0.1); color: #c76a5a; }
+.f03-after-label { background: rgba(107,158,107,0.1); color: #5a8a5a; }
+
+/* Before 卡片 */
+.f03-card-before {
+  background: var(--p-card); border: 1px solid var(--p-border);
+  border-radius: 18px; padding: 18px 20px;
+  position: relative;
+}
+.f03-card-before .tc-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.f03-card-before .tc-tag { display: inline-flex; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 500; background: rgba(212,133,58,0.12); color: #a66a28; }
+.f03-card-before .tc-time { font-size: 11px; color: var(--p-muted); }
+.f03-card-before .tc-content { font-size: 14.5px; line-height: 1.7; color: var(--p-text); margin-bottom: 12px; }
+.f03-card-before .tc-bottom { display: flex; flex-wrap: wrap; gap: 5px; }
+.f03-card-before .kw-old { font-size: 11px; color: var(--p-muted); background: #f0ebe4; padding: 3px 10px; border-radius: 8px; }
+
+/* After 卡片 */
+.f03-card-after {
+  background: var(--p-card);
+  border-radius: 18px; padding: 18px 20px;
+  position: relative;
+  border-left: 4px solid var(--p-spark);
+  box-shadow: 0 2px 14px rgba(61,52,40,0.06);
+}
+.f03-card-after .ac-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.f03-card-after .ac-cat { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; background: rgba(212,133,58,0.1); color: #a66a28; }
+.f03-card-after .ac-time { font-size: 11px; color: var(--p-muted); }
+.f03-card-after .ac-title { font-size: 16px; font-weight: 700; color: var(--p-text); margin-bottom: 8px; }
+.f03-card-after .ac-body { font-size: 14px; line-height: 1.75; color: var(--p-text-sec); margin-bottom: 14px; }
+.f03-card-after .ac-kw { display: flex; flex-wrap: wrap; gap: 6px; }
+.f03-card-after .kw-new {
+  font-size: 11.5px; padding: 4px 12px; border-radius: 20px;
+  background: rgba(196,118,58,0.07); color: #a66a28;
+  border: 1px solid rgba(196,118,58,0.1); font-weight: 500;
+}
+.f03-card-after .ac-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(232,223,210,0.5); }
+.f03-card-after .ac-links { font-size: 11.5px; color: var(--p-primary); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+
+/* 色带示例行 */
+.f03-swatches { display: flex; gap: 8px; margin-top: 16px; justify-content: center; }
+.f03-swatch { width: 120px; border-radius: 12px; padding: 12px 14px; background: var(--p-card); border-left: 4px solid; box-shadow: 0 1px 6px rgba(61,52,40,0.04); }
+.f03-swatch.spark { border-left-color: var(--p-spark); }
+.f03-swatch.knowledge { border-left-color: var(--p-knowledge); }
+.f03-swatch.emotion { border-left-color: var(--p-emotion); }
+.f03-swatch.experience { border-left-color: var(--p-experience); }
+.f03-swatch-title { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.f03-swatch-desc { font-size: 10.5px; color: var(--p-muted); line-height: 1.4; }
+
+/* ============================================================
+   FRAME 04: 两阶段输入
+   ============================================================ */
+.f04-content { background: rgba(61,52,40,0.35); min-height: 720px; display: flex; align-items: flex-end; justify-content: center; }
+.f04-modal {
+  width: 390px; background: var(--p-card);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 24px 32px;
+  animation: slideUpModal 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 720px; overflow: hidden;
+}
+@keyframes slideUpModal { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.f04-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.f04-modal-title { font-size: 19px; font-weight: 700; }
+.f04-close { width: 32px; height: 32px; border-radius: 50%; background: #f0ebe4; border: none; font-size: 16px; color: var(--p-text-sec); display: flex; align-items: center; justify-content: center; cursor: default; }
+
+/* 阶段1：快速捕获 */
+.f04-stage1 { }
+.f04-textarea {
+  width: 100%; min-height: 140px;
+  background: #f8f3ea; border: 1.5px solid var(--p-border);
+  border-radius: 16px; padding: 16px 18px;
+  font-size: 16px; font-family: inherit; line-height: 1.7;
+  color: var(--p-text); resize: none; outline: none;
+}
+.f04-textarea:focus { border-color: var(--p-primary); }
+.f04-char-count { text-align: right; font-size: 11.5px; color: var(--p-muted); margin-top: 6px; }
+
+.f04-cat-quick { margin: 18px 0; }
+.f04-cat-quick-label { font-size: 12px; color: var(--p-muted); margin-bottom: 10px; font-weight: 500; }
+.f04-cat-row { display: flex; gap: 8px; }
+.f04-cat-chip {
+  flex: 1; padding: 10px 8px; border-radius: 14px;
+  border: 1.5px solid var(--p-border); background: var(--p-card);
+  text-align: center; cursor: default;
+  transition: all 0.15s;
+}
+.f04-cat-chip.selected { border-color: var(--p-primary); background: rgba(196,118,58,0.06); }
+.f04-cat-chip-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.f04-cat-chip-name { font-size: 11.5px; font-weight: 600; color: var(--p-text-sec); }
+
+.f04-hint { text-align: center; font-size: 12px; color: var(--p-muted); margin: 16px 0; }
+.f04-hint kbd {
+  display: inline-block; padding: 2px 7px; border-radius: 5px;
+  background: #f0ebe4; font-size: 11px; font-family: inherit; border: 1px solid var(--p-border);
+  margin: 0 2px;
+}
+
+.f04-btn-row { display: flex; gap: 10px; margin-top: 8px; }
+.f04-btn-primary {
+  flex: 1; padding: 14px; border-radius: 16px; border: none;
+  background: linear-gradient(135deg, var(--p-primary), var(--p-primary-light));
+  color: white; font-size: 15.5px; font-weight: 600; cursor: default;
+}
+.f04-btn-ghost {
+  padding: 14px 20px; border-radius: 16px; border: 1.5px solid var(--p-border);
+  background: transparent; color: var(--p-text-sec); font-size: 15px; font-weight: 500; cursor: default;
+}
+
+/* 阶段2标签提示 */
+.f04-expand-hint {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; margin-top: 14px; padding: 10px;
+  border: 1.5px dashed var(--p-border); border-radius: 14px;
+  color: var(--p-muted); font-size: 13px; cursor: default;
+}
+.f04-expand-hint:hover { border-color: var(--p-primary); color: var(--p-primary); }
+
+/* ============================================================
+   FRAME 05: 空状态引导
+   ============================================================ */
+.f05-content { background: var(--p-bg); min-height: 720px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.f05-empty {
+  text-align: center; padding: 40px 32px;
+}
+.f05-empty-icon {
+  font-size: 72px; margin-bottom: 20px;
+  display: inline-block;
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+.f05-empty-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.f05-empty-sub { font-size: 14.5px; color: var(--p-text-sec); line-height: 1.6; margin-bottom: 28px; max-width: 280px; margin-left: auto; margin-right: auto; }
+
+.f05-start-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border-radius: 20px;
+  background: linear-gradient(135deg, var(--p-primary), var(--p-primary-light));
+  color: white; font-size: 15.5px; font-weight: 600;
+  border: none; box-shadow: 0 4px 20px rgba(196,118,58,0.35);
+  cursor: default; margin-bottom: 32px;
+}
+
+.f05-prompts { text-align: left; max-width: 300px; margin: 0 auto; }
+.f05-prompts-label { font-size: 12px; color: var(--p-muted); margin-bottom: 12px; font-weight: 500; }
+.f05-prompt-item {
+  padding: 14px 16px; background: var(--p-card);
+  border: 1px solid var(--p-border); border-radius: 14px;
+  margin-bottom: 8px; font-size: 14px; color: var(--p-text-sec);
+  cursor: default; transition: all 0.15s;
+  position: relative; padding-left: 44px;
+}
+.f05-prompt-item::before {
+  content: attr(data-icon);
+  position: absolute; left: 14px; top: 14px; font-size: 16px;
+}
+.f05-prompt-item:hover { border-color: var(--p-primary); background: rgba(196,118,58,0.03); transform: translateX(4px); }
+
+/* ============================================================
+   FRAME 06: 详情页升级
+   ============================================================ */
+.f06-content { background: var(--p-bg); min-height: 720px; padding: 0 0 40px; }
+.f06-back-bar { display: flex; align-items: center; gap: 10px; padding: 16px 18px; }
+.f06-back-btn { width: 34px; height: 34px; border-radius: 10px; background: var(--p-card); border: 1px solid var(--p-border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--p-text-sec); }
+.f06-back-text { font-size: 14px; color: var(--p-muted); }
+
+.f06-detail-card {
+  background: var(--p-card); border-radius: 22px;
+  margin: 0 14px; padding: 24px 22px;
+  box-shadow: 0 2px 16px rgba(61,52,40,0.05);
+  border-left: 4px solid var(--p-spark);
+}
+.f06-dc-body {
+  font-size: 17px; line-height: 1.9; color: var(--p-text);
+  margin-bottom: 20px;
+}
+
+.f06-kw-section { margin-bottom: 20px; }
+.f06-kw-label { font-size: 12px; font-weight: 600; color: var(--p-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+.f06-kw-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.f06-kw-item {
+  font-size: 12px; padding: 5px 14px; border-radius: 20px;
+  background: rgba(196,118,58,0.07); color: #a66a28;
+  border: 1px solid rgba(196,118,58,0.1); font-weight: 500;
+  cursor: default; transition: all 0.15s;
+}
+.f06-kw-item:hover { background: rgba(196,118,58,0.15); transform: scale(1.05); }
+.f06-kw-add {
+  font-size: 12px; padding: 5px 12px; border-radius: 20px;
+  border: 1.5px dashed var(--p-border); color: var(--p-muted);
+  cursor: default;
+}
+
+/* 迷你关系图 */
+.f06-graph-section { margin-bottom: 16px; }
+.f06-graph-label { font-size: 12px; font-weight: 600; color: var(--p-muted); margin-bottom: 12px; }
+.f06-mini-graph {
+  background: #f8f3ea; border-radius: 16px; padding: 18px 16px;
+  position: relative; min-height: 130px;
+}
+.f06-node {
+  position: absolute; padding: 8px 12px; border-radius: 10px;
+  font-size: 11.5px; font-weight: 600; border: 1.5px solid;
+  background: var(--p-card); white-space: nowrap;
+}
+.f06-node.center { left: 50%; top: 50%; transform: translate(-50%,-50%); border-color: var(--p-primary); color: var(--p-primary); background: rgba(196,118,58,0.06); z-index: 2; }
+.f06-node.n1 { left: 12px; top: 8px; border-color: var(--p-experience); color: #5a8262; }
+.f06-node.n2 { right: 12px; top: 8px; border-color: var(--p-knowledge); color: #567499; }
+.f06-node.n3 { left: 30px; bottom: 8px; border-color: var(--p-spark); color: #a66a28; }
+.f06-svg-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.f06-svg-lines line { stroke: var(--p-border); stroke-width: 1.5; stroke-dasharray: 4 3; }
+
+.f06-footer-meta {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-top: 14px; border-top: 1px solid rgba(232,223,210,0.5);
+  font-size: 11.5px; color: var(--p-muted);
+}
+.f06-action-btns { display: flex; gap: 8px; }
+.f06-abtn { padding: 6px 14px; border-radius: 10px; border: 1px solid var(--p-border); background: var(--p-card); font-size: 12.5px; color: var(--p-text-sec); cursor: default; }
+.f06-abtn.danger:hover { border-color: #c76a5a; color: #c76a5a; }
+
+/* ============================================================
+   FRAME 07: 图谱页重构
+   ============================================================ */
+.f07-content { background: var(--p-bg); min-height: 720px; padding: 0; }
+.f07-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 18px;
+}
+.f07-title { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.f07-title-icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(122,168,130,0.18), rgba(100,140,180,0.14));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border: 1px solid rgba(122,168,130,0.2);
+}
+.f07-stats { display: flex; gap: 8px; }
+.f07-stat-pill {
+  padding: 6px 14px; border-radius: 12px;
+  background: var(--p-card); border: 1px solid var(--p-border);
+  text-align: center;
+}
+.f07-stat-num { font-size: 17px; font-weight: 800; color: var(--p-primary); }
+.f07-stat-lbl { font-size: 9.5px; color: var(--p-muted); }
+
+.f07-filter { padding: 0 18px 12px; display: flex; gap: 8px; overflow-x: auto; }
+.f07-filter-chip {
+  padding: 7px 18px; border-radius: 18px; border: 1px solid var(--p-border);
+  background: var(--p-card); color: var(--p-text-sec); font-size: 13px;
+  white-space: nowrap; cursor: default;
+}
+.f07-filter-chip.active { border-color: var(--p-primary); color: var(--p-primary); background: rgba(196,118,58,0.06); }
+
+.f07-canvas-area {
+  margin: 0 14px; height: 480px;
+  background: var(--p-card); border-radius: 22px;
+  border: 1px solid var(--p-border);
+  position: relative; overflow: hidden;
+}
+
+/* 图谱中的节点卡片 */
+.gnode {
+  position: absolute; background: var(--p-card);
+  border: 1.5px solid var(--p-border); border-radius: 14px;
+  padding: 10px 14px; min-width: 110px; max-width: 150px;
+  box-shadow: 0 2px 10px rgba(61,52,40,0.06);
+  cursor: default; transition: all 0.2s;
+}
+.gnode:hover { box-shadow: 0 6px 20px rgba(61,52,40,0.12); transform: scale(1.04); z-index: 10; }
+.gnode-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; }
+.gnode.spark { border-top: 3px solid var(--p-spark); }
+.gnode.spark .gnode-dot { background: var(--p-spark); }
+.gnode.knowledge { border-top: 3px solid var(--p-knowledge); }
+.gnode.knowledge .gnode-dot { background: var(--p-knowledge); }
+.gnode.emotion { border-top: 3px solid var(--p-emotion); }
+.gnode.emotion .gnode-dot { background: var(--p-emotion); }
+.gnode.experience { border-top: 3px solid var(--p-experience); }
+.gnode.experience .gnode-dot { background: var(--p-experience); }
+.gnode-title { font-size: 12.5px; font-weight: 700; color: var(--p-text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gnode-kw { font-size: 10px; color: var(--p-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 图谱连线 SVG */
+.glines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.glines line { stroke: #d4cabb; stroke-width: 1.5; }
+
+/* 聚类背景区域 */
+.gcluster {
+  position: absolute; border-radius: 20px; border: 1.5px dashed; z-index: 0;
+}
+.gcluster.spark { border-color: rgba(212,133,58,0.15); background: rgba(212,133,58,0.03); }
+.gcluster.knowledge { border-color: rgba(122,156,198,0.15); background: rgba(122,156,198,0.03); }
+
+/* 底部工具栏 */
+.f07-toolbar {
+  display: flex; justify-content: center; gap: 12px;
+  padding: 14px 18px;
+}
+.f07-tool-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 8px 16px; border-radius: 14px;
+  border: 1px solid var(--p-border); background: var(--p-card);
+  color: var(--p-text-sec); font-size: 12.5px; font-weight: 500;
+  cursor: default;
+}
+
+/* 图谱引导提示 */
+.f07-tip {
+  text-align: center; font-size: 12px; color: var(--p-muted); padding: 8px;
+}
+
+/* ============================================================
+   FRAME 08: 搜索体验
+   ============================================================ */
+.f08-content { background: var(--p-bg); min-height: 720px; padding: 0; }
+.f08-search-header { padding: 16px 18px; }
+.f08-search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--p-card); border: 2px solid var(--p-primary);
+  border-radius: 16px; padding: 12px 16px;
+  box-shadow: 0 2px 12px rgba(196,118,58,0.12);
+}
+.f08-search-icon { font-size: 18px; color: var(--p-primary); }
+.f08-search-input { flex: 1; border: none; background: none; font-size: 16px; font-family: inherit; color: var(--p-text); outline: none; }
+.f08-search-input::placeholder { color: var(--p-muted); }
+.f08-search-shortcut {
+  padding: 3px 8px; border-radius: 6px; background: #f0ebe4;
+  font-size: 11px; font-weight: 600; color: var(--p-muted);
+  border: 1px solid var(--p-border);
+}
+
+.f08-results { padding: 0 18px; }
+.f08-group-label { font-size: 12px; font-weight: 700; color: var(--p-muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.f08-result-item {
+  background: var(--p-card); border: 1px solid var(--p-border);
+  border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+  border-left: 3px solid var(--p-spark);
+}
+.f08-result-item.knowledge { border-left-color: var(--p-knowledge); }
+.f08-result-item em { background: rgba(196,118,58,0.2); color: #a66a28; font-style: normal; padding: 0 2px; border-radius: 3px; }
+.f08-result-title { font-size: 14px; font-weight: 600; color: var(--p-text); margin-bottom: 4px; }
+.f08-result-preview { font-size: 12.5px; color: var(--p-text-sec); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.f08-result-meta { display: flex; gap: 10px; margin-top: 6px; }
+.f08-result-cat { font-size: 10px; font-weight: 600; }
+.f08-result-time { font-size: 10.5px; color: var(--p-muted); }
+
+.f08-recent { padding: 0 18px; margin-top: 20px; }
+.f08-recent-label { font-size: 12px; font-weight: 600; color: var(--p-muted); margin-bottom: 10px; }
+.f08-recent-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.f08-recent-tag {
+  padding: 5px 12px; border-radius: 12px; background: var(--p-card);
+  border: 1px solid var(--p-border); font-size: 12px; color: var(--p-text-sec); cursor: default;
+}
+
+/* ============================================================
+   FRAME 09: 暗色模式
+   ============================================================ */
+.f09-content { background: #1a1816; min-height: 720px; padding: 16px 16px 100px; }
+.f09-navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; margin-bottom: 20px; }
+.f09-brand { font-size: 22px; font-weight: 600; letter-spacing: 3px; color: #e8e2d8; }
+.f09-brand span { color: #d4945c; }
+.f09-greeting { font-size: 28px; font-weight: 800; color: #e8e2d8; margin-bottom: 4px; }
+.f09-greeting-sub { font-size: 13px; color: #7a7065; margin-bottom: 20px; }
+
+.f09-stats {
+  display: flex; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 24px;
+}
+.f09-stat { flex: 1; text-align: center; padding: 14px 8px; border-right: 1px solid rgba(255,255,255,0.06); }
+.f09-stat:last-child { border-right: none; }
+.f09-stat-num { font-size: 24px; font-weight: 800; color: #d4945c; }
+.f09-stat-lbl { font-size: 10.5px; color: #7a7065; margin-top: 2px; }
+
+.f09-card {
+  background: #292522; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 18px; padding: 18px 20px; margin-bottom: 12px;
+  border-left: 4px solid #d4853a;
+}
+.f09-card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.f09-cat-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; background: rgba(212,133,58,0.12); color: #d4945c; }
+.f09-card-time { font-size: 11.5px; color: #7a7065; }
+.f09-card-body { font-size: 14.5px; line-height: 1.75; color: #c8c2b8; margin-bottom: 12px; }
+.f09-kw-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.f09-kw-pill { font-size: 11.5px; padding: 4px 12px; border-radius: 20px; background: rgba(212,133,58,0.08); color: #d4945c; border: 1px solid rgba(212,133,58,0.12); }
+
+/* ============================================================
+   底部说明
+   ============================================================ */
+.proto-footer {
+  text-align: center; padding: 40px 24px 60px;
+  color: var(--p-muted); font-size: 13px;
+}
+.proto-footer strong { color: var(--p-text); }
+</style>
+</head>
+<body>
+
+<!-- 导航栏 -->
+<nav class="proto-nav">
+  <span class="proto-nav-title">🧶 织念 UI 优化方案</span>
+  <button class="proto-tab active" onclick="showFrame(0)">① 当前首页</button>
+  <button class="proto-tab" onclick="showFrame(1)">② 时间流首页<span class="proto-badge badge-p0">P0</span></button>
+  <button class="proto-tab" onclick="showFrame(2)">③ 卡片色带<span class="proto-badge badge-p0">P0</span></button>
+  <button class="proto-tab" onclick="showFrame(3)">④ 快速捕获<span class="proto-badge badge-p0">P0</span></button>
+  <button class="proto-tab" onclick="showFrame(4)">⑤ 空状态<span class="proto-badge badge-p1">P1</span></button>
+  <button class="proto-tab" onclick="showFrame(5)">⑥ 详情页<span class="proto-badge badge-p1">P1</span></button>
+  <button class="proto-tab" onclick="showFrame(6)">⑦ 图谱页<span class="proto-badge badge-p1">P1</span></button>
+  <button class="proto-tab" onclick="showFrame(7)">⑧ 全局搜索<span class="proto-badge badge-p2">P2</span></button>
+  <button class="proto-tab" onclick="showFrame(8)">⑨ 暗色模式<span class="proto-badge badge-p2">P2</span></button>
+</nav>
+
+<!-- 展示区 -->
+<div class="proto-stage">
+
+<!-- ========== FRAME 01: 当前首页 ========== -->
+<div class="proto-frame active" id="frame0">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="compare-tag tag-before">BEFORE</div>
+  <div class="f01-content">
+    <div class="f01-navbar">
+      <div class="f01-brand"><span>🧶</span> 织念</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="font-size:11px;color:#9a8b78;padding:4px 10px;background:#f0ebe4;border-radius:10px;">☁️ 已同步</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c4763a,#db9054);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;">T</div>
+      </div>
+    </div>
+
+    <div class="f01-greeting">思维宫殿 👋</div>
+    <div class="f01-greeting-sub">欢迎回来，继续编织你的思绪</div>
+
+    <div class="f01-stats">
+      <div class="f01-stat"><div class="f01-stat-num">128</div><div class="f01-stat-lbl">总记录</div></div>
+      <div class="f01-stat"><div class="f01-stat-num">23</div><div class="f01-stat-lbl">关联数</div></div>
+      <div class="f01-stat"><div class="f01-stat-num">4</div><div class="f01-stat-lbl">宫殿</div></div>
+    </div>
+
+    <div class="f01-section-title">四大宫殿</div>
+    <div class="f01-cat-grid">
+      <div class="f01-cat-card">
+        <div class="f01-cat-icon spark">⚡</div>
+        <div class="f01-cat-name">灵光一现</div>
+        <div class="f01-cat-desc">捕捉突然冒出的灵感</div>
+      </div>
+      <div class="f01-cat-card">
+        <div class="f01-cat-icon knowledge">📚</div>
+        <div class="f01-cat-name">知识入脑</div>
+        <div class="f01-cat-desc">记录学到的知识</div>
+      </div>
+      <div class="f01-cat-card">
+        <div class="f01-cat-icon emotion">🌊</div>
+        <div class="f01-cat-name">情绪流淌</div>
+        <div class="f01-cat-desc">记录此刻的心情</div>
+      </div>
+      <div class="f01-cat-card">
+        <div class="f01-cat-icon experience">🆕</div>
+        <div class="f01-cat-name">新鲜体验</div>
+        <div class="f01-cat-desc">记录新的尝试</div>
+      </div>
+    </div>
+
+    <div class="f01-section-title">最近记录</div>
+    <div class="f01-recent-list">
+      <div class="f01-recent-item">
+        <div class="f01-recent-top">
+          <span class="f01-tag f01-tag-spark">⚡ 灵光一现</span>
+          <span class="f01-time">2小时前</span>
+        </div>
+        <div class="f01-recent-content">做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，这笔存入想购买的高价值物品的心愿金...</div>
+      </div>
+      <div class="f01-recent-item">
+        <div class="f01-recent-top">
+          <span class="f01-tag f01-tag-spark">⚡ 灵光一现</span>
+          <span class="f01-time">昨天</span>
+        </div>
+        <div class="f01-recent-content">今天读完了《认知觉醒》，里面关于元认知的概念让我想到...</div>
+      </div>
+      <div class="f01-recent-item">
+        <div class="f01-recent-top">
+          <span class="f01-tag" style="background:rgba(201,122,154,0.13);color:#a55a7a;">🌊 情绪</span>
+          <span class="f01-time">3天前</span>
+        </div>
+        <div class="f01-recent-content">最近工作压力有点大，但每次写完东西之后都会感觉好很多...</div>
+      </div>
+    </div>
+  </div>
+  <div class="f01-fab">+</div>
+  <div class="proto-label right">❌ 问题：列表感太强<br>❌ 所有卡片长得一样<br>❌ 关系不可见<br>❌ 分类占满整屏</div>
+</div>
+
+
+<!-- ========== FRAME 02: 时间流式首页 ========== -->
+<div class="proto-frame" id="frame1">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="compare-tag tag-after">AFTER ✨</div>
+  <div class="f02-content">
+    <!-- 导航 -->
+    <div class="f02-navbar">
+      <div class="f02-brand"><span class="f02-brand-icon">🧶</span>织念</div>
+      <div class="f02-nav-actions">
+        <div class="f02-search-hint">⌘K 搜索</div>
+        <div class="f02-nav-btn">☁️</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c4763a,#db9054);display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;">T</div>
+      </div>
+    </div>
+
+    <!-- 今天 -->
+    <div class="f02-date-group">
+      <div class="f02-date-header">
+        <span class="f02-date-day">今天</span>
+        <span class="f02-date-label">5月12日 周一 · 3条记录</span>
+        <div class="f02-date-dot"></div>
+      </div>
+
+      <!-- Hero Card -->
+      <div class="f02-hero-card spark">
+        <div class="f02-card-meta">
+          <span class="f02-cat-pill spark">⚡ 灵光一现</span>
+          <span class="f02-card-time">17:19</span>
+        </div>
+        <div class="f02-card-body">
+          做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，这笔存入想购买的高价值物品的心愿金，通过改变支出的分配比例帮助减肥。
+        </div>
+        <div class="f02-kw-row">
+          <span class="f02-kw-pill">存钱罐</span>
+          <span class="f02-kw-pill">减重</span>
+          <span class="f02-kw-pill">花费</span>
+          <span class="f02-kw-pill">减肥</span>
+          <span class="f02-kw-pill">网站</span>
+          <span class="f02-kw-pill">高热量</span>
+        </div>
+
+        <!-- 关联子卡片 -->
+        <div class="f02-link-section">
+          <div class="f02-link-label">🔗 关联思绪</div>
+          <div class="f02-link-cards">
+            <div class="f02-mini-card experience">
+              <div class="f02-mini-cat experience">新鲜体验</div>
+              <div class="f02-mini-text">开始尝试间歇性禁食，每天16小时...</div>
+              <div class="f02-mini-kw"><span>禁食</span><span>健康</span></div>
+            </div>
+            <div class="f02-mini-card knowledge">
+              <div class="f02-mini-cat knowledge">知识入脑</div>
+              <div class="f02-mini-text">《原子习惯》读书笔记：习惯的四个定律...</div>
+              <div class="f02-mini-kw"><span>习惯</span><span>行为</span></div>
+            </div>
+            <div class="f02-mini-card emotion">
+              <div class="f02-mini-cat emotion">情绪流淌</div>
+              <div class="f02-mini-text">今天控制住了想吃零食的冲动，感觉很好</div>
+              <div class="f02-mini-kw"><span>克制</span><span>开心</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 普通卡片 -->
+      <div class="f02-normal-card knowledge">
+        <div class="f02-card-meta">
+          <span class="f02-cat-pill knowledge">📚 知识入脑</span>
+          <span class="f02-card-time">14:30</span>
+        </div>
+        <div class="f02-card-body">今天读完了《认知觉醒》第三章，关于元认知的概念让我意识到自己之前的学习方法有问题。</div>
+        <div class="f02-kw-row">
+          <span class="f02-kw-pill" style="background:rgba(122,156,198,0.07);color:#567499;border-color:rgba(122,156,198,0.1);">认知觉醒</span>
+          <span class="f02-kw-pill" style="background:rgba(122,156,198,0.07);color:#567499;border-color:rgba(122,156,198,0.1);">元认知</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 昨天 -->
+    <div class="f02-date-group">
+      <div class="f02-date-header">
+        <span class="f02-date-day">昨天</span>
+        <span class="f02-date-label">5月11日 周日 · 2条记录</span>
+        <div class="f02-date-dot"></div>
+      </div>
+
+      <div class="f02-normal-card emotion">
+        <div class="f02-card-meta">
+          <span class="f02-cat-pill emotion">🌊 情绪流淌</span>
+          <span class="f02-card-time">21:00</span>
+        </div>
+        <div class="f02-card-body">最近工作压力有点大，但每次写完东西之后都会感觉好很多。文字真的是一种治愈方式。</div>
+        <div class="f02-kw-row">
+          <span class="f02-kw-pill" style="background:rgba(201,122,154,0.07);color:#a55a7a;border-color:rgba(201,122,154,0.1);">压力</span>
+          <span class="f02-kw-pill" style="background:rgba(201,122,154,0.07);color:#a55a7a;border-color:rgba(201,122,154,0.1);">治愈</span>
+        </div>
+      </div>
+
+      <div class="f02-normal-card spark">
+        <div class="f02-card-meta">
+          <span class="f02-cat-pill spark">⚡ 灵光一现</span>
+          <span class="f02-card-time">09:15</span>
+        </div>
+        <div class="f02-card-body">如果能把关键词自动关联起来，形成一个知识网络就好了——这就是做织念的初衷。</div>
+        <div class="f02-kw-row">
+          <span class="f02-kw-pill">关键词</span>
+          <span class="f02-kw-pill">知识网络</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="f02-fab">+</div>
+  <div class="proto-label left">✅ 时间线自然流动<br>✅ Hero card 主次分明<br>✅ 关联直接可见<br>✅ 色带区分分类<br>✅ 信息密度合理</div>
+</div>
+
+
+<!-- ========== FRAME 03: 卡片色带对比 ========== -->
+<div class="proto-frame" id="frame2">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f03-content">
+    <div class="f03-header">
+      <h2>🎨 卡片视觉升级</h2>
+      <p>左侧色带 + 关键词胶囊 + 标题化</p>
+    </div>
+
+    <div class="f03-compare">
+      <!-- Before -->
+      <div>
+        <div style="font-size:11px;font-weight:700;background:rgba(199,106,90,0.1);color:#c76a5a;padding:3px 10px;border-radius:6px;display:inline-block;margin-bottom:8px;">❌ BEFORE — 当前样式</div>
+        <div class="f03-card-before">
+          <div class="tc-top">
+            <span class="tc-tag">⚡ 灵光一现</span>
+            <span class="tc-time">2小时前</span>
+          </div>
+          <div class="tc-content">做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，通过改变支出的分配比例帮助减肥。</div>
+          <div class="tc-bottom">
+            <span class="kw-old">的花费</span>
+            <span class="kw-old">助减肥</span>
+            <span class="kw-old">减</span>
+            <span class="kw-old">重存</span>
+            <span class="kw-old">钱罐</span>
+            <span class="kw-old">网站</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- After -->
+      <div>
+        <div style="font-size:11px;font-weight:700;background:rgba(107,158,107,0.1);color:#5a8a5a;padding:3px 10px;border-radius:6px;display:inline-block;margin-bottom:8px;">✅ AFTER — 升级后</div>
+        <div class="f03-card-after">
+          <div class="ac-top">
+            <span class="ac-cat">⚡ 灵光一现</span>
+            <span class="ac-time">2小时前</span>
+          </div>
+          <div class="ac-title">💰 减重存钱罐计划</div>
+          <div class="ac-body">做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，通过改变支出的分配比例帮助减肥。</div>
+          <div class="ac-kw">
+            <span class="kw-new">存钱罐</span>
+            <span class="kw-new">减重</span>
+            <span class="kw-new">花费</span>
+            <span class="kw-new">减肥</span>
+            <span class="kw-new">网站</span>
+            <span class="kw-new">高热量</span>
+            <span class="kw-new">心愿金</span>
+          </div>
+          <div class="ac-footer">
+            <span class="ac-links">🔗 3 个关联</span>
+            <span style="font-size:11px;color:#9a8b78;">点击关键词可跳转搜索 →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 色带示例 -->
+    <div style="text-align:center;margin-top:24px;">
+      <div style="font-size:12px;color:var(--p-muted);margin-bottom:12px;font-weight:600;">四种分类色带效果</div>
+      <div class="f03-swatches">
+        <div class="f03-swatch spark">
+          <div class="f03-swatch-title">⚡ 灵光一现</div>
+          <div class="f03-swatch-desc">暖橙色 · 创意与灵感</div>
+        </div>
+        <div class="f03-swatch knowledge">
+          <div class="f03-swatch-title">📚 知识入脑</div>
+          <div class="f03-swatch-desc">冷静蓝 · 学习与成长</div>
+        </div>
+        <div class="f03-swatch emotion">
+          <div class="f03-swatch-title">🌊 情绪流淌</div>
+          <div class="f03-swatch-desc">温柔粉 · 感受与心情</div>
+        </div>
+        <div class="f03-swatch experience">
+          <div class="f03-swatch-title">🆕 新鲜体验</div>
+          <div class="f03-swatch-desc">自然绿 · 探索与发现</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== FRAME 04: 两阶段输入 ========== -->
+<div class="proto-frame" id="frame3">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f04-content">
+    <div class="f04-modal">
+      <div class="f04-modal-header">
+        <span class="f04-modal-title">✨ 记录一个念头</span>
+        <div class="f04-close">✕</div>
+      </div>
+
+      <!-- 阶段1：快速捕获 -->
+      <textarea class="f04-textarea" placeholder="写下你的想法...&#10;&#10;比如：突然想到可以用AI来辅助整理笔记">做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费</textarea>
+      <div class="f04-char-count">42 / 2000</div>
+
+      <div class="f04-cat-quick">
+        <div class="f04-cat-quick-label">选择分类（或智能推荐）</div>
+        <div class="f04-cat-row">
+          <div class="f04-cat-chip selected">
+            <span class="f04-cat-chip-icon">⚡</span>
+            <span class="f04-cat-chip-name">灵感</span>
+          </div>
+          <div class="f04-cat-chip">
+            <span class="f04-cat-chip-icon">📚</span>
+            <span class="f04-cat-chip-name">知识</span>
+          </div>
+          <div class="f04-cat-chip">
+            <span class="f04-cat-chip-icon">🌊</span>
+            <span class="f04-cat-chip-name">情绪</span>
+          </div>
+          <div class="f04-cat-chip">
+            <span class="f04-cat-chip-icon">🆕</span>
+            <span class="f04-cat-chip-name">体验</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="f04-hint">
+        <kbd>Enter</kbd> 快速保存 · <kbd>Shift+Enter</kbd> 换行 · <kbd>Esc</kbd> 关闭
+      </div>
+
+      <div class="f04-btn-row">
+        <div class="f04-btn-primary">✓ 保存</div>
+        <div class="f04-btn-ghost">取消</div>
+      </div>
+
+      <div class="f04-expand-hint">
+        ↓ 展开编辑关键词、标签和关联
+      </div>
+    </div>
+  </div>
+  <div class="proto-label bottom">⌨️ 键盘优先 · Enter即保存<br>🤖 智能推荐分类<br>📝 两阶段渐进展开</div>
+</div>
+
+
+<!-- ========== FRAME 05: 空状态引导 ========== -->
+<div class="proto-frame" id="frame4">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f05-content">
+    <div class="f05-empty">
+      <div class="f05-empty-icon">🧶</div>
+      <div class="f05-empty-title">欢迎来到织念</div>
+      <div class="f05-empty-sub">这里是你思维的花园<br>每一个念头都值得被捕捉和连接</div>
+
+      <div class="f05-start-btn">开始第一个念头 →</div>
+
+      <div class="f05-prompts">
+        <div class="f05-prompts-label">💡 试试从这些开始</div>
+        <div class="f05-prompt-item" data-icon="💡">今天学到了什么新知识？</div>
+        <div class="f05-prompt-item" data-icon="⚡">突然冒出的一个想法...</div>
+        <div class="f05-prompt-item" data-icon="🌊">此刻心情如何？</div>
+        <div class="f05-prompt-item" data-icon="🆕">最近尝试了什么新鲜事？</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ========== FRAME 06: 详情页升级 ========== -->
+<div class="proto-frame" id="frame5">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f06-content">
+    <div class="f06-back-bar">
+      <div class="f06-back-btn">←</div>
+      <span class="f06-back-text">返回 灵光一现 列表</span>
+    </div>
+
+    <div class="f06-detail-card spark">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:600;background:rgba(212,133,58,0.1);color:#a66a28;">⚡ 灵光一现</span>
+        <span style="font-size:11.5px;color:#9a8b78;">2026-05-11 17:19</span>
+      </div>
+
+      <div class="f06-dc-body">
+        做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，这笔存入想购买的高价值物品的心愿金，通过改变支出的分配比例帮助减肥。
+      </div>
+
+      <!-- 关键词区 -->
+      <div class="f06-kw-section">
+        <div class="f06-kw-label">🔑 关键词 · 点击搜索</div>
+        <div class="f06-kw-list">
+          <span class="f06-kw-item">存钱罐</span>
+          <span class="f06-kw-item">减重</span>
+          <span class="f06-kw-item">花费</span>
+          <span class="f06-kw-item">减肥</span>
+          <span class="f06-kw-item">网站</span>
+          <span class="f06-kw-item">高热量</span>
+          <span class="f06-kw-item">心愿金</span>
+          <span class="f06-kw-item">克制</span>
+          <span class="f06-kw-add">+ 添加</span>
+        </div>
+      </div>
+
+      <!-- 迷你关系图 -->
+      <div class="f06-graph-section">
+        <div class="f06-graph-label">🔗 关联网络</div>
+        <div class="f06-mini-graph">
+          <svg class="f06-svg-lines" viewBox="0 0 340 130">
+            <!-- 中心到四周的连线 -->
+            <line x1="170" y1="65" x2="60" y2="30" />
+            <line x1="170" y1="65" x2="280" y2="30" />
+            <line x1="170" y1="65" x2="50" y2="100" />
+          </svg>
+          <div class="f06-node center">减重存钱罐计划</div>
+          <div class="f06-node n1">🍎 高热量食物</div>
+          <div class="f06-node n2">💰 心愿金清单</div>
+          <div class="f06-node n3">⚡ 禁食体验记录</div>
+        </div>
+      </div>
+
+      <div class="f06-footer-meta">
+        <span>创建于 5月11日 · 刚刚修改</span>
+        <div class="f06-action-btns">
+          <div class="f06-abtn">编辑 ✏️</div>
+          <div class="f06-abtn danger">删除 🗑️</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="proto-label right">🔑 关键词可点击跳转<br>🕸️ 内嵌迷你关系图<br>📝 标题化 + 色带区分</div>
+</div>
+
+
+<!-- ========== FRAME 07: 图谱页重构 ========== -->
+<div class="proto-frame" id="frame6">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f07-content">
+    <div class="f07-header">
+      <div class="f07-title"><div class="f07-title-icon">🪢</div>思维图谱</div>
+      <div class="f07-stats">
+        <div class="f07-stat-pill"><div class="f07-stat-num">128</div><div class="f07-stat-lbl">节点</div></div>
+        <div class="f07-stat-pill"><div class="f07-stat-num">23</div><div class="f07-stat-lbl">连线</div></div>
+      </div>
+    </div>
+
+    <div class="f07-filter">
+      <div class="f07-filter-chip active">全部</div>
+      <div class="f07-filter-chip">⚡ 灵感</div>
+      <div class="f07-filter-chip">📚 知识</div>
+      <div class="f07-filter-chip">🌊 情绪</div>
+      <div class="f07-filter-chip">🆕 体验</div>
+    </div>
+
+    <div class="f07-canvas-area">
+      <!-- SVG 连线层 -->
+      <svg class="glines" viewBox="0 0 362 480">
+        <line x1="181" y1="120" x2="90" y2="70" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="120" x2="272" y2="70" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="120" x2="70" y2="200" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="120" x2="292" y2="200" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="90" y1="70" x2="70" y2="200" stroke="#d4cabb" stroke-width="1.5" opacity="0.4"/>
+        <line x1="70" y1="200" x2="120" y2="330" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="292" y1="200" x2="250" y2="330" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="120" x2="181" y2="300" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="300" x2="120" y2="330" stroke="#d4cabb" stroke-width="1.5"/>
+        <line x1="181" y1="300" x2="250" y2="330" stroke="#d4cabb" stroke-width="1.5"/>
+      </svg>
+
+      <!-- 聚类区域 -->
+      <div class="gcluster spark" style="left:20px;top:30px;width:160px;height:180px;"></div>
+      <div class="gcluster knowledge" style="left:190px;top:20px;width:150px;height:170px;"></div>
+      <div class="gcluster emotion" style="left:30px;top:260px;width:140px;height:140px;"></div>
+
+      <!-- 节点卡片 -->
+      <div class="gnode spark" style="left:115px;top:95px;">
+        <span class="gnode-dot"></span><span class="gnode-title">减重存钱罐</span>
+        <div class="gnode-kw">花费 减肥 网站</div>
+      </div>
+      <div class="gnode experience" style="left:25px;top:45px;">
+        <span class="gnode-dot"></span><span class="gnode-title">禁食体验</span>
+        <div class="gnode-kw">健康 饮食</div>
+      </div>
+      <div class="gnode knowledge" style="left:220px;top:45px;">
+        <span class="gnode-dot"></span><span class="gnode-title">原子习惯</span>
+        <div class="gnode-kw">习惯 行为改变</div>
+      </div>
+      <div class="gnode spark" style="left:10px;top:175px;">
+        <span class="gnode-dot"></span><span class="gnode-title">高热量食物</span>
+        <div class="gnode-kw">营养 卡路里</div>
+      </div>
+      <div class="gnode knowledge" style="left:232px;top:175px;">
+        <span class="gnode-dot"></span><span class="gnode-title">认知觉醒</span>
+        <div class="gnode-kw">元认知 学习</div>
+      </div>
+      <div class="gnode emotion" style="left:40px;top:270px;">
+        <span class="gnode-dot"></span><span class="gnode-title">压力与治愈</span>
+        <div class="gnode-kw">情绪 写作</div>
+      </div>
+      <div class="gnode spark" style="left:145px;top:280px;">
+        <span class="gnode-dot"></span><span class="gnode-title">知识网络</span>
+        <div class="gnode-kw">关键词 关联</div>
+      </div>
+      <div class="gnode experience" style="left:225px;top:310px;">
+        <span class="gnode-dot"></span><span class="gnode-title">冥想练习</span>
+        <div class="gnode-kw">正念 呼吸</div>
+      </div>
+    </div>
+
+    <div class="f07-tip">💡 拖拽节点查看详情 · 双指缩放 · 点击节点查看关联</div>
+
+    <div class="f07-toolbar">
+      <div class="f07-tool-btn">🔄 重置布局</div>
+      <div class="f07-tool-btn">🔍 搜索节点</div>
+      <div class="f07-tool-btn">📐 切换视图</div>
+      <div class="f07-tool-btn">📤 导出图片</div>
+    </div>
+  </div>
+  <div class="proto-label left">📍 节点卡片化（非圆点）<br>🎨 分类聚类背景<br>🛠️ 底部工具栏可见<br>🔍 筛选 + 搜索入口</div>
+</div>
+
+
+<!-- ========== FRAME 08: 全局搜索 ========== -->
+<div class="proto-frame" id="frame7">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f08-content">
+    <div class="f08-search-header">
+      <div class="f08-search-box">
+        <span class="f08-search-icon">🔍</span>
+        <input class="f08-search-input" value="减重" placeholder="搜索关键词、内容、标签...">
+        <span class="f08-search-shortcut">ESC</span>
+      </div>
+    </div>
+
+    <div class="f08-results">
+      <div class="f08-group-label">完美匹配 (1)</div>
+      <div class="f08-result-item spark">
+        <div class="f08-result-title">💰 <em>减重</em>存钱罐计划</div>
+        <div class="f08-result-preview">做一个<em>减重</em>存钱罐网站，用于记录克制住没买的高热量食物所预估的花费...</div>
+        <div class="f08-result-meta">
+          <span class="f08-result-cat" style="color:#a66a28;">⚡ 灵感</span>
+          <span class="f08-result-time">2小时前</span>
+        </div>
+      </div>
+
+      <div class="f08-group-label">包含关键词 (3)</div>
+      <div class="f08-result-item experience">
+        <div class="f08-result-title">间歇性<em>减重</em>实验</div>
+        <div class="f08-result-preview">开始尝试16+8间歇性禁食来辅助<em>减重</em>，每天16小时空腹期...</div>
+        <div class="f08-result-meta">
+          <span class="f08-result-cat" style="color:#5a8262;">🆕 体验</span>
+          <span class="f08-result-time">昨天</span>
+        </div>
+      </div>
+      <div class="f08-result-item knowledge">
+        <div class="f08-result-title">《原子习惯》读书笔记</div>
+        <div class="f08-result-preview">关于<em>减重</em>的习惯养成：让好行为显而易见、有吸引力、简单易行...</div>
+        <div class="f08-result-meta">
+          <span class="f08-result-cat" style="color:#567499;">📚 知识</span>
+          <span class="f08-result-time">3天前</span>
+        </div>
+      </div>
+      <div class="f08-result-item emotion">
+        <div class="f08-result-title">控制食欲的成就感</div>
+        <div class="f08-result-preview">今天控制住了想吃零食的冲动，<em>减重</em>路上又前进了一小步...</div>
+        <div class="f08-result-meta">
+          <span class="f08-result-cat" style="color:#a55a7a;">🌊 情绪</span>
+          <span class="f08-result-time">5天前</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="f08-recent">
+      <div class="f08-recent-label">最近搜索</div>
+      <div class="f08-recent-tags">
+        <span class="f08-recent-tag">存钱罐</span>
+        <span class="f08-recent-tag">认知觉醒</span>
+        <span class="f08-recent-tag">冥想</span>
+        <span class="f08-recent-tag">习惯</span>
+      </div>
+    </div>
+  </div>
+  <div class="proto-label right">⌨️ ⌘K 全局快捷键<br>🔍 分组显示结果<br>🟠 搜索词高亮<br>📜 最近搜索历史</div>
+</div>
+
+
+<!-- ========== FRAME 09: 暗色模式 ========== -->
+<div class="proto-frame" id="frame8">
+  <div class="phone-notch"></div>
+  <div class="phone-statusbar" style="background:#292522;color:#a09080;"><span>17:30</span><span>📶 🔋</span></div>
+  <div class="f09-content">
+    <div class="f09-navbar">
+      <div class="f09-brand"><span>🧶</span> 织念</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div style="font-size:11px;color:#7a7065;padding:4px 10px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid rgba(255,255,255,0.06);">☁️ 已同步</div>
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#d4945c,#e8a85c);display:flex;align-items:center;justify-content:center;color:#1a1614;font-size:12px;font-weight:700;">T</div>
+      </div>
+    </div>
+
+    <div class="f09-greeting">思维宫殿 👋</div>
+    <div class="f09-greeting-sub">欢迎回来，继续编织你的思绪</div>
+
+    <div class="f09-stats">
+      <div class="f09-stat"><div class="f09-stat-num">128</div><div class="f09-stat-lbl">总记录</div></div>
+      <div class="f09-stat"><div class="f09-stat-num">23</div><div class="f09-stat-lbl">关联数</div></div>
+      <div class="f09-stat"><div class="f09-stat-num">4</div><div class="f09-stat-lbl">宫殿</div></div>
+    </div>
+
+    <div class="f09-card">
+      <div class="f09-card-meta">
+        <span class="f09-cat-pill">⚡ 灵光一现</span>
+        <span class="f09-card-time">17:19</span>
+      </div>
+      <div class="f09-card-body">做一个减重存钱罐网站，用于记录克制住没买的高热量食物所预估的花费，通过改变支出的分配比例帮助减肥。</div>
+      <div class="f09-kw-row">
+        <span class="f09-kw-pill">存钱罐</span>
+        <span class="f09-kw-pill">减重</span>
+        <span class="f09-kw-pill">花费</span>
+        <span class="f09-kw-pill">减肥</span>
+        <span class="f09-kw-pill">网站</span>
+      </div>
+    </div>
+
+    <div class="f09-card" style="border-left-color:#7a9cc6;">
+      <div class="f09-card-meta">
+        <span class="f09-cat-pill" style="background:rgba(122,156,198,0.12);color:#8faacc;">📚 知识入脑</span>
+        <span class="f09-card-time">14:30</span>
+      </div>
+      <div class="f09-card-body">今天读完了《认知觉醒》第三章，关于元认知的概念让我意识到之前的学习方法有问题。</div>
+      <div class="f09-kw-row">
+        <span class="f09-kw-pill" style="background:rgba(122,156,198,0.08);color:#8faacc;border-color:rgba(122,156,198,0.12);">认知觉醒</span>
+        <span class="f09-kw-pill" style="background:rgba(122,156,198,0.08);color:#8faacc;border-color:rgba(122,156,198,0.12);">元认知</span>
+      </div>
+    </div>
+
+    <div class="f09-card" style="border-left-color:#c97a9a;">
+      <div class="f09-card-meta">
+        <span class="f09-cat-pill" style="background:rgba(201,122,154,0.12);color:#cc8faa;">🌊 情绪流淌</span>
+        <span class="f09-card-time">昨天 21:00</span>
+      </div>
+      <div class="f09-card-body">最近工作压力有点大，但每次写完东西之后都会感觉好很多。文字真的是一种治愈方式。</div>
+      <div class="f09-kw-row">
+        <span class="f09-kw-pill" style="background:rgba(201,122,154,0.08);color:#cc8faa;border-color:rgba(201,122,154,0.12);">压力</span>
+        <span class="f09-kw-pill" style="background:rgba(201,122,154,0.08);color:#cc8faa;border-color:rgba(201,122,154,0.12);">治愈</span>
+      </div>
+    </div>
+  </div>
+  <div class="proto-label left">🌙 温暖暗色（非纯黑）<br>🎨 保持暖棕色调<br>✨ 对比度舒适<br>👁️ 夜间阅读友好</div>
+</div>
+
+
+<!-- 底部说明 -->
+<div class="proto-footer">
+  <p><strong>织念 ZhiNian UI 优化方案原型</strong> — 共 9 个交互式原型帧</p>
+  <p style="margin-top:6px;">点击上方导航切换查看 · P0=必做 · P1=应做 · P2=锦上添花</p>
+  <p style="margin-top:8px;color:#b0a89a;">对标参考：flomo / Notion / Heptabase / Linear / Apple Notes / Obsidian / Arc Browser</p>
+</div>
+
+<script>
+function showFrame(index) {
+  // Hide all frames
+  document.querySelectorAll('.proto-frame').forEach(f => f.classList.remove('active'));
+  // Show selected
+  document.getElementById('frame' + index).classList.add('active');
+  // Update tabs
+  document.querySelectorAll('.proto-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+}
+</script>
+
+</body>
+</html>
