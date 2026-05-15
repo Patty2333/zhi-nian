@@ -2100,7 +2100,7 @@ async function pushToCloud() {
     const res = await fetch(url, {
       method: 'PATCH',
       headers: {
-        'Authorization': `token ${CLOUD_CONFIG.ACCESS_TOKEN}`,
+        'Authorization': `Bearer ${CLOUD_CONFIG.ACCESS_TOKEN}`,
         'Accept': 'application/vnd.github.v3+json'
       },
       body: JSON.stringify({
@@ -2125,7 +2125,7 @@ async function pullFromCloud(forceMerge) {
   try {
     const url = `${CLOUD_CONFIG.API_BASE}gists/${CLOUD_CONFIG.GIST_ID}`
     const res = await fetch(url, {
-      headers: { 'Authorization': `token ${CLOUD_CONFIG.ACCESS_TOKEN}` }
+      headers: { 'Authorization': `Bearer ${CLOUD_CONFIG.ACCESS_TOKEN}` }
     })
     if (!res.ok) { console.warn('[织念] 拉取失败:', res.status); return false }
     const gist = await res.json()
