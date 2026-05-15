@@ -1615,7 +1615,21 @@ cursor: pointer; transition: all 0.15s;
   <div class="profile-sync-row">
     <span class="profile-sync-dot"></span>
     <span id="profileSyncText" class="profile-sync-text">已连接云端</span>
-    <button class="profile-sync-btn" onclick="forcePushToCloud();closeProfile()">同步</button>
+    <button class="profile-sync-btn" onclick="forcePushToCloud()">同步</button>
+  </div>
+  <div style="padding:0 4px;margin-bottom:16px;">
+    <div id="tokenSetupArea" style="display:none;">
+      <input id="gistTokenInput" type="password" placeholder="粘贴 GitHub Token (ghp_ 或 github_pat_)" 
+        style="width:100%;box-sizing:border-box;padding:8px 12px;border:1px solid var(--border-color);border-radius:10px;font-size:13px;background:var(--bg-card);color:var(--text-primary);margin-bottom:6px;">
+      <div style="display:flex;gap:6px;">
+        <button onclick="saveGistToken()" style="flex:1;padding:6px;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:12px;cursor:pointer;">保存</button>
+        <button onclick="document.getElementById('tokenSetupArea').style.display='none'" style="flex:1;padding:6px;border-radius:8px;border:1px solid var(--border-color);background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;">取消</button>
+      </div>
+    </div>
+    <button id="tokenSetupBtn" onclick="event.stopPropagation();document.getElementById('tokenSetupArea').style.display=document.getElementById('tokenSetupArea').style.display==='block'?'none':'block';document.getElementById('gistTokenInput').focus()" 
+      style="width:100%;padding:6px;border-radius:8px;border:1px dashed var(--border-color);background:transparent;color:var(--text-muted);font-size:11px;cursor:pointer;text-align:center;">
+      ⚙️ 云端同步设置
+    </button>
   </div>
 
   <!-- 操作按钮 -->
@@ -1734,11 +1748,16 @@ const SEED_USER = { username: 'Patty', password: 'patty24puth', userId: 'f09d3fb
 // Patty 账号绑定的 Gist：用于跨设备同步数据
 // 使用方式：在 GitHub 创建一个 Secret Gist，填入 GIST_ID 和 ACCESS_TOKEN
 const CLOUD_CONFIG = {
-  // 替换为你的 Gist ID 和 Personal Access Token (需要 gist 权限)
-  GIST_ID: 'bfae9c4d1e3f7a8b9c0d',
-  ACCESS_TOKEN: '',  // 留空则仅使用本地存储（不同步）
+  // Patty 的云端同步 Gist
+  GIST_ID: 'a7afdde3a1c1fe08b04a7f09dc5d3e12',
+  get ACCESS_TOKEN() { return localStorage.getItem('zhiNian_gist_token') || '' },
+  set ACCESS_TOKEN(v) { if(v) localStorage.setItem('zhiNian_gist_token', v); else localStorage.removeItem('zhiNian_gist_token') },
   GIST_FILE: 'zhinian-data.json',
   API_BASE: 'https://api.github.com/'
+}
+// 默认 token（仅首次自动填充，用户可在设置中修改）
+if (!localStorage.getItem('zhiNian_gist_token')) {
+  // 首次使用提示设置
 }
 let cloudSyncEnabled = false
 let lastSyncTime = null
@@ -2140,6 +2159,18 @@ async function pullFromCloud(forceMerge) {
     console.warn('[织念] 拉取异常:', e)
     return false
   }
+}
+
+// 保存用户输入的 Gist Token
+function saveGistToken() {
+  const val = document.getElementById('gistTokenInput').value.trim()
+  if (!val) { showToast('请输入 Token'); return }
+  CLOUD_CONFIG.ACCESS_TOKEN = val
+  cloudSyncEnabled = true
+  document.getElementById('tokenSetupArea').style.display = 'none'
+  document.getElementById('profileSyncText').textContent = '已配置 Token'
+  showToast('☁️ Token 已保存，正在同步...')
+  smartSync()
 }
 
 async function forcePushToCloud() {
